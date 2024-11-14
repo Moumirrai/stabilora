@@ -13,7 +13,7 @@ export class SnapManager {
     gridSnap: true,
     gridSize: 20,
     orthogonalSnap: true,
-    orthogonalSnapDistance: 10
+    orthogonalSnapDistance: 10,
   };
 
   constructor(config?: Partial<SnapConfig>) {
@@ -29,7 +29,7 @@ export class SnapManager {
   }
 
   public removeLine(id: string) {
-    this.lines = this.lines.filter(l => l.id !== id);
+    this.lines = this.lines.filter((l) => l.id !== id);
   }
 
   public snapPoint(point: Point, excludeLineId?: string): Point {
@@ -41,7 +41,10 @@ export class SnapManager {
     // 1. End point snapping
     if (this.config.endPointSnap) {
       const endPoint = this.findNearestEndPoint(point, excludeLineId);
-      if (endPoint && this.getDistance(point, endPoint) < this.config.endPointSnapDistance) {
+      if (
+        endPoint &&
+        this.getDistance(point, endPoint) < this.config.endPointSnapDistance
+      ) {
         snappedPoint = endPoint;
         minDistance = this.getDistance(point, endPoint);
       }
@@ -60,7 +63,10 @@ export class SnapManager {
     // 3. Center point snapping
     if (this.config.centerSnap) {
       const centerPoint = this.findNearestCenterPoint(point, excludeLineId);
-      if (centerPoint && this.getDistance(point, centerPoint) < this.config.centerSnapDistance) {
+      if (
+        centerPoint &&
+        this.getDistance(point, centerPoint) < this.config.centerSnapDistance
+      ) {
         const distance = this.getDistance(point, centerPoint);
         if (distance < minDistance) {
           snappedPoint = centerPoint;
@@ -84,7 +90,10 @@ export class SnapManager {
       const orthogonalPoint = this.findOrthogonalPoint(point, excludeLineId);
       if (orthogonalPoint) {
         const distance = this.getDistance(point, orthogonalPoint);
-        if (distance < this.config.orthogonalSnapDistance && distance < minDistance) {
+        if (
+          distance < this.config.orthogonalSnapDistance &&
+          distance < minDistance
+        ) {
           snappedPoint = orthogonalPoint;
         }
       }
@@ -94,7 +103,7 @@ export class SnapManager {
   }
 
   private currentStartPoint: Point | null = null;
-  
+
   public setStartPoint(point: Point) {
     this.currentStartPoint = point;
   }
@@ -107,14 +116,17 @@ export class SnapManager {
     return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
   }
 
-  private findNearestEndPoint(point: Point, excludeLineId?: string): Point | null {
+  private findNearestEndPoint(
+    point: Point,
+    excludeLineId?: string
+  ): Point | null {
     let nearest: Point | null = null;
     let minDistance = Infinity;
 
     this.lines
-      .filter(l => l.id !== excludeLineId)
-      .forEach(line => {
-        [line.start, line.end].forEach(endPoint => {
+      .filter((l) => l.id !== excludeLineId)
+      .forEach((line) => {
+        [line.start, line.end].forEach((endPoint) => {
           const distance = this.getDistance(point, endPoint);
           if (distance < minDistance) {
             minDistance = distance;
@@ -129,7 +141,7 @@ export class SnapManager {
   private getAxisLockedPoint(point: Point, startPoint: Point): Point {
     const dx = Math.abs(point.x - startPoint.x);
     const dy = Math.abs(point.y - startPoint.y);
-    
+
     if (dx > dy) {
       return { x: point.x, y: startPoint.y };
     } else {
@@ -137,13 +149,16 @@ export class SnapManager {
     }
   }
 
-  private findNearestCenterPoint(point: Point, excludeLineId?: string): Point | null {
+  private findNearestCenterPoint(
+    point: Point,
+    excludeLineId?: string
+  ): Point | null {
     let nearest: Point | null = null;
     let minDistance = Infinity;
 
     this.lines
-      .filter(l => l.id !== excludeLineId)
-      .forEach(line => {
+      .filter((l) => l.id !== excludeLineId)
+      .forEach((line) => {
         const distance = this.getDistance(point, line.center);
         if (distance < minDistance) {
           minDistance = distance;
@@ -157,17 +172,20 @@ export class SnapManager {
   private snapToGrid(point: Point): Point {
     return {
       x: Math.round(point.x / this.config.gridSize) * this.config.gridSize,
-      y: Math.round(point.y / this.config.gridSize) * this.config.gridSize
+      y: Math.round(point.y / this.config.gridSize) * this.config.gridSize,
     };
   }
 
-  private findOrthogonalPoint(point: Point, excludeLineId?: string): Point | null {
+  private findOrthogonalPoint(
+    point: Point,
+    excludeLineId?: string
+  ): Point | null {
     let nearest: Point | null = null;
     let minDistance = Infinity;
 
     this.lines
-      .filter(l => l.id !== excludeLineId)
-      .forEach(line => {
+      .filter((l) => l.id !== excludeLineId)
+      .forEach((line) => {
         const orthogonal = this.getOrthogonalProjection(point, line);
         if (orthogonal) {
           const distance = this.getDistance(point, orthogonal);
@@ -185,16 +203,18 @@ export class SnapManager {
     const dx = line.end.x - line.start.x;
     const dy = line.end.y - line.start.y;
     const magnitude = Math.sqrt(dx * dx + dy * dy);
-    
+
     if (magnitude === 0) return null;
 
-    const u = ((point.x - line.start.x) * dx + (point.y - line.start.y) * dy) / (magnitude * magnitude);
-    
+    const u =
+      ((point.x - line.start.x) * dx + (point.y - line.start.y) * dy) /
+      (magnitude * magnitude);
+
     if (u < 0 || u > 1) return null;
 
     return {
       x: line.start.x + u * dx,
-      y: line.start.y + u * dy
+      y: line.start.y + u * dy,
     };
   }
 }

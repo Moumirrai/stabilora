@@ -1,28 +1,28 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import Konva from 'konva'
-import gsap from 'gsap'
+import { ref, onMounted } from 'vue';
+import Konva from 'konva';
+import gsap from 'gsap';
 
-const stageRef = ref<HTMLDivElement | null>(null)
-const fpsRef = ref<number>(0)
-const pointerPositionRef = ref<{ x: number, y: number }>({ x: 0, y: 0 })
+const stageRef = ref<HTMLDivElement | null>(null);
+const fpsRef = ref<number>(0);
+const pointerPositionRef = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 
-const zoomSpeed = 0.05
+const zoomSpeed = 0.05;
 
 const calculateFPS = () => {
-  let lastFrameTime = performance.now()
+  let lastFrameTime = performance.now();
   const updateFPS = () => {
-    const now = performance.now()
-    const delta = now - lastFrameTime
-    fpsRef.value = Math.round(1000 / delta)
-    lastFrameTime = now
-    requestAnimationFrame(updateFPS)
-  }
-  requestAnimationFrame(updateFPS)
-}
+    const now = performance.now();
+    const delta = now - lastFrameTime;
+    fpsRef.value = Math.round(1000 / delta);
+    lastFrameTime = now;
+    requestAnimationFrame(updateFPS);
+  };
+  requestAnimationFrame(updateFPS);
+};
 
 onMounted(() => {
-  calculateFPS()
+  calculateFPS();
 
   if (stageRef.value) {
     const stage = new Konva.Stage({
@@ -30,85 +30,85 @@ onMounted(() => {
       width: window.innerWidth,
       height: window.innerHeight,
       draggable: false,
-    })
+    });
 
-    const layer = new Konva.Layer()
-    stage.add(layer)
+    const layer = new Konva.Layer();
+    stage.add(layer);
 
     const updateLineThickness = () => {
-      const scale = stage.scaleX()
+      const scale = stage.scaleX();
       layer.getChildren().forEach((shape) => {
         if (shape instanceof Konva.Line) {
-          shape.strokeWidth(2 / scale)
+          shape.strokeWidth(2 / scale);
         }
-      })
-      layer.batchDraw()
-    }
+      });
+      layer.batchDraw();
+    };
 
     stage.on('mousedown', (e) => {
       if (e.evt.button === 1) {
-        e.evt.preventDefault()
-        stage.draggable(true)
-        stage.startDrag()
+        e.evt.preventDefault();
+        stage.draggable(true);
+        stage.startDrag();
       }
-    })
+    });
 
     stage.on('mouseup', (e) => {
       if (e.evt.button === 1) {
-        stage.draggable(false)
+        stage.draggable(false);
       }
-    })
+    });
 
     stage.on('wheel', (e) => {
       // stop default scrolling
-      e.evt.preventDefault()
+      e.evt.preventDefault();
 
-      const oldScale = stage.scaleX()
-      const pointer = stage.getPointerPosition()
+      const oldScale = stage.scaleX();
+      const pointer = stage.getPointerPosition();
 
-      if (!pointer) return
+      if (!pointer) return;
 
       const mousePointTo = {
         x: (pointer.x - stage.x()) / oldScale,
         y: (pointer.y - stage.y()) / oldScale,
-      }
+      };
 
       // how to scale? Zoom in? Or zoom out?
-      let direction = e.evt.deltaY > 0 ? -1 : 1
+      let direction = e.evt.deltaY > 0 ? -1 : 1;
 
       // when we zoom on trackpad, e.evt.ctrlKey is true
       // in that case lets revert direction
       if (e.evt.ctrlKey) {
-        direction = -direction
+        direction = -direction;
       }
 
       // Logarithmic zoom factor with adjustable speed
-      const scaleBy = 1 + zoomSpeed
-      const newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy
+      const scaleBy = 1 + zoomSpeed;
+      const newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
 
-      stage.scale({ x: newScale, y: newScale })
+      stage.scale({ x: newScale, y: newScale });
 
       const newPos = {
         x: pointer.x - mousePointTo.x * newScale,
         y: pointer.y - mousePointTo.y * newScale,
-      }
-      stage.position(newPos)
+      };
+      stage.position(newPos);
 
-      updateLineThickness()
-    })
+      updateLineThickness();
+    });
 
     stage.on('dblclick', (e) => {
       if (e.evt.button === 1) {
         const box = layer.getClientRect({ relativeTo: stage });
 
-        const scaleX = stage.width() / box.width
-        const scaleY = stage.height() / box.height
-        const newScale = Math.min(scaleX, scaleY)
+        const scaleX = stage.width() / box.width;
+        const scaleY = stage.height() / box.height;
+        const newScale = Math.min(scaleX, scaleY);
 
         const newPos = {
           x: -box.x * newScale,
           y: -box.y * newScale,
-        }
+        };
 
         gsap.to(stage, {
           scaleX: newScale,
@@ -120,25 +120,25 @@ onMounted(() => {
           onComplete: () => {
             //layer.batchDraw()
             //gsap.ticker.fps(144)
-            updateLineThickness()
-          }
-        })
+            updateLineThickness();
+          },
+        });
 
-        updateLineThickness()
+        updateLineThickness();
       }
-    })
+    });
 
     stage.on('mousemove', (_) => {
-      const pointer = stage.getPointerPosition()
+      const pointer = stage.getPointerPosition();
       if (pointer) {
-        const scale = stage.scaleX()
-        const stagePos = stage.position()
+        const scale = stage.scaleX();
+        const stagePos = stage.position();
         pointerPositionRef.value = {
           x: (pointer.x - stagePos.x) / scale,
-          y: (pointer.y - stagePos.y) / scale
-        }
+          y: (pointer.y - stagePos.y) / scale,
+        };
       }
-    })
+    });
 
     for (let i = 0; i < 1000; i++) {
       const circle = new Konva.Circle({
@@ -148,11 +148,11 @@ onMounted(() => {
         fill: Konva.Util.getRandomColor(),
         stroke: 'black',
         strokeWidth: 2,
-      })
-      layer.add(circle)
+      });
+      layer.add(circle);
     }
 
-    const points = [50, 50, 100, 150, 150, 100, 200, 200, 250, 150]
+    const points = [50, 50, 100, 150, 150, 100, 200, 200, 250, 150];
     const line = new Konva.Line({
       points: points.concat([250, stage.height(), 50, stage.height()]), // Close the shape
       stroke: 'blue',
@@ -161,8 +161,8 @@ onMounted(() => {
       closed: true,
       lineCap: 'round',
       lineJoin: 'round',
-    })
-    layer.add(line)
+    });
+    layer.add(line);
 
     var topLayer = new Konva.Layer();
     stage.add(topLayer);
@@ -172,19 +172,23 @@ onMounted(() => {
     });
     topLayer.add(selectionRectangle);
 
-    layer.draw()
+    layer.draw();
   }
-})
+});
 </script>
 
 <template>
   <div ref="stageRef"></div>
   <div class="fps-counter">FPS: {{ fpsRef }}</div>
-  <div class="pointer-position">Pointer: {{ pointerPositionRef.x.toPrecision(6) }}, {{ pointerPositionRef.y.toPrecision(6) }}</div>
+  <div class="pointer-position">
+    Pointer: {{ pointerPositionRef.x.toPrecision(6) }},
+    {{ pointerPositionRef.y.toPrecision(6) }}
+  </div>
 </template>
 
 <style scoped>
-.fps-counter, .pointer-position {
+.fps-counter,
+.pointer-position {
   position: fixed;
   top: 10px;
   left: 10px;

@@ -2,25 +2,25 @@
 import { SnapManager } from '../SnapManager';
 
 export class SnapService {
-    private static instance: SnapService;
-    private snapManager: SnapManager;
+  private static instance: SnapService;
+  private snapManager: SnapManager;
 
-    private constructor() {
-        this.snapManager = new SnapManager({
-            enabled: true,
-            endPointSnapDistance: 15,
-            gridSize: 50,
-        });
-    }
+  private constructor() {
+    this.snapManager = new SnapManager({
+      enabled: true,
+      endPointSnapDistance: 15,
+      gridSize: 50,
+    });
+  }
 
-    public static getInstance(): SnapService {
-        if (!SnapService.instance) {
-            SnapService.instance = new SnapService();
-        }
-        return SnapService.instance;
+  public static getInstance(): SnapService {
+    if (!SnapService.instance) {
+      SnapService.instance = new SnapService();
     }
+    return SnapService.instance;
+  }
 
-    public getSnapManager(): SnapManager {
-        return this.snapManager;
-    }
+  public getSnapManager(): SnapManager {
+    return this.snapManager;
+  }
 }

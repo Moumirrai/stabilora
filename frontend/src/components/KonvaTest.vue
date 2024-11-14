@@ -6,7 +6,7 @@ import LineDrawer from '../viewport/LineDrawer'; */
 
 const stageRef = ref<HTMLDivElement | null>(null);
 const fpsRef = ref<number>(0);
-let pointerPositionRef = ref<{ x: number, y: number }>({ x: 0, y: 0 });
+let pointerPositionRef = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 
 /* const calculateFPS = () => {
   let lastFrameTime = performance.now();
@@ -60,7 +60,7 @@ onMounted(() => {
     pointerPositionRef = stageManager.pointerPositionRef;
 
     const layerManager = stageManager.getLayerManager();
-    const geometryLayer = layerManager.geometryLayer
+    const geometryLayer = layerManager.geometryLayer;
 
     /* for (let i = 0; i < 5; i++) {
       const circle = new Konva.Circle({
@@ -87,7 +87,6 @@ onMounted(() => {
     geometryLayer.add(line); */
 
     geometryLayer.draw();
-
   }
 });
 </script>
@@ -95,7 +94,10 @@ onMounted(() => {
 <template>
   <div ref="stageRef" class="viewport"></div>
   <div class="fps-counter">FPS: {{ fpsRef }}</div>
-  <div class="pointer-position">Pointer: {{ pointerPositionRef.x.toPrecision(6) }}, {{ pointerPositionRef.y.toPrecision(6) }}</div>
+  <div class="pointer-position">
+    Pointer: {{ pointerPositionRef.x.toPrecision(6) }},
+    {{ pointerPositionRef.y.toPrecision(6) }}
+  </div>
 </template>
 
 <style scoped>
@@ -119,6 +121,6 @@ onMounted(() => {
 .viewport {
   width: 100vw;
   height: 100vh;
-  background: #181818
+  background: #181818;
 }
 </style>

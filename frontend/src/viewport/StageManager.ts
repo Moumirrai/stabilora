@@ -14,7 +14,7 @@ class StageManager {
   // @ts-expect-error
   private grid: Grid | null = null;
 
-  public readonly pointerPositionRef = ref({ x: 0, y: 0 })
+  public readonly pointerPositionRef = ref({ x: 0, y: 0 });
 
   constructor(container: HTMLDivElement) {
     /*  this.stage = new Konva.Stage({
@@ -28,7 +28,7 @@ class StageManager {
       width: window.innerWidth,
       height: window.innerHeight,
       draggable: false,
-    })
+    });
 
     // Center the canvas at (0, 0)
     this.stage.position({
@@ -76,7 +76,7 @@ class StageManager {
 
     this.stage.on('mousemove', (_) => {
       this.handleCursorPos();
-    })
+    });
 
     this.stage.on('wheel', (e) => {
       e.evt.preventDefault();
@@ -88,20 +88,19 @@ class StageManager {
         this.handleDoubleClick();
       }
     });
-
   }
 
   private handleCursorPos() {
     if (!this.stage) return;
-    const pointer = this.stage.getPointerPosition()
+    const pointer = this.stage.getPointerPosition();
     if (pointer) {
-      const scale = this.stage.scaleX()
-      const stagePos = this.stage.position()
+      const scale = this.stage.scaleX();
+      const stagePos = this.stage.position();
       this.pointerPositionRef.value = {
         x: (pointer.x - stagePos.x) / scale,
-        y: (pointer.y - stagePos.y) / scale
-      }
-      console.log(this.pointerPositionRef.value)
+        y: (pointer.y - stagePos.y) / scale,
+      };
+      console.log(this.pointerPositionRef.value);
     }
   }
 
@@ -130,7 +129,7 @@ class StageManager {
     }
 
     this.stage.scale({ x: newScale, y: newScale });
-    console.log(this.stage.scaleX())
+    console.log(this.stage.scaleX());
 
     const newPos = {
       x: pointer.x - mousePointTo.x * newScale,
@@ -185,7 +184,10 @@ class StageManager {
   private updateLineThickness() {
     if (!this.stage) return;
     const scale = this.stage.scaleX();
-    const layers = [this.getLayerManager().geometryLayer, /* this.getLayerManager().forcesLayer, this.getLayerManager().resultsLayer */];
+    const layers = [
+      this.getLayerManager()
+        .geometryLayer /* this.getLayerManager().forcesLayer, this.getLayerManager().resultsLayer */,
+    ];
     layers.forEach((layer) => {
       if (!layer) return;
       layer.getChildren().forEach((shape) => {

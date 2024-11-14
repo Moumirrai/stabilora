@@ -10,9 +10,7 @@ class Grid {
     stage.on('wheel', () => this.drawGrid(stage));
     //stage.on('dragmove', () => this.drawGrid(stage));
     stage.on('dragend', () => this.drawGrid(stage));
-    stage.on('redraw', () =>
-      this.drawGrid(stage)
-    );
+    stage.on('redraw', () => this.drawGrid(stage));
     this.drawGrid(stage);
   }
 
@@ -65,48 +63,58 @@ class Grid {
     // Draw subdivision lines
     const subDivisions = 5;
     for (let x = startX; x <= endX; x += size / subDivisions) {
-      if (Math.abs(x % size) > 0.1) { // Skip main grid lines
-        this.layer.add(new Konva.Line({
-          points: [x, startY, x, endY],
-          stroke: subLineColor,
-          strokeWidth: subdivisionWidth,
-          opacity: 0.3,
-          strokeScaleEnabled: false,
-        }));
+      if (Math.abs(x % size) > 0.1) {
+        // Skip main grid lines
+        this.layer.add(
+          new Konva.Line({
+            points: [x, startY, x, endY],
+            stroke: subLineColor,
+            strokeWidth: subdivisionWidth,
+            opacity: 0.3,
+            strokeScaleEnabled: false,
+          })
+        );
       }
     }
 
     for (let y = startY; y <= endY; y += size / subDivisions) {
-      if (Math.abs(y % size) > 0.1) { // Skip main grid lines
-        this.layer.add(new Konva.Line({
-          points: [startX, y, endX, y],
-          stroke: subLineColor,
-          strokeWidth: subdivisionWidth,
-          opacity: 0.3,
-          strokeScaleEnabled: false,
-        }));
+      if (Math.abs(y % size) > 0.1) {
+        // Skip main grid lines
+        this.layer.add(
+          new Konva.Line({
+            points: [startX, y, endX, y],
+            stroke: subLineColor,
+            strokeWidth: subdivisionWidth,
+            opacity: 0.3,
+            strokeScaleEnabled: false,
+          })
+        );
       }
     }
 
     // Draw main grid lines
     for (let x = startX; x <= endX; x += size) {
       const isMainLine = Math.abs(x) < 0.1;
-      this.layer.add(new Konva.Line({
-        points: [x, startY, x, endY],
-        stroke: isMainLine ? '#ff0000' : mainLineColor, // Red for Y axis
-        strokeWidth: isMainLine ? mainLineWidth : subLineWidth,
-        strokeScaleEnabled: false,
-      }));
+      this.layer.add(
+        new Konva.Line({
+          points: [x, startY, x, endY],
+          stroke: isMainLine ? '#ff0000' : mainLineColor, // Red for Y axis
+          strokeWidth: isMainLine ? mainLineWidth : subLineWidth,
+          strokeScaleEnabled: false,
+        })
+      );
     }
 
     for (let y = startY; y <= endY; y += size) {
       const isMainLine = Math.abs(y) < 0.1;
-      this.layer.add(new Konva.Line({
-        points: [startX, y, endX, y],
-        stroke: isMainLine ? '#00ff00' : mainLineColor, // Green for X axis
-        strokeWidth: isMainLine ? mainLineWidth : subLineWidth,
-        strokeScaleEnabled: false,
-      }));
+      this.layer.add(
+        new Konva.Line({
+          points: [startX, y, endX, y],
+          stroke: isMainLine ? '#00ff00' : mainLineColor, // Green for X axis
+          strokeWidth: isMainLine ? mainLineWidth : subLineWidth,
+          strokeScaleEnabled: false,
+        })
+      );
     }
 
     this.layer.batchDraw();

@@ -3,7 +3,7 @@ import KonvaTest from './components/KonvaTest.vue';
 </script>
 
 <template>
-  <KonvaTest/>
+  <KonvaTest />
 </template>
 
 <style scoped>
