@@ -1,5 +1,5 @@
 import Konva from 'konva';
-import { IRect } from 'konva/lib/types';
+//import { IRect } from 'konva/lib/types';
 import gsap from 'gsap';
 import LayerManager from './LayerManager';
 import Grid from './Grid';
@@ -11,6 +11,7 @@ class StageManager {
   private zoomSpeed = 0.16;
   private maxZoom = 45_000;
   private minZoom = 0.002;
+  // @ts-expect-error
   private grid: Grid | null = null;
 
   public readonly pointerPositionRef = ref({ x: 0, y: 0 })
@@ -30,12 +31,17 @@ class StageManager {
     })
 
     // Center the canvas at (0, 0)
-    /* this.stage.position({
+    this.stage.position({
       x: container.clientWidth / 2,
       y: container.clientHeight / 2,
-    }); */
+    });
 
     this.layerManager = new LayerManager(this.stage);
+  }
+
+  public emitRedraw() {
+    if (!this.stage) return;
+    this.stage.fire('redraw');
   }
 
   getStage(): Konva.Stage | null {
@@ -68,7 +74,7 @@ class StageManager {
       }
     });
 
-    this.stage.on('mousemove', (e) => {
+    this.stage.on('mousemove', (_) => {
       this.handleCursorPos();
     })
 
@@ -82,6 +88,7 @@ class StageManager {
         this.handleDoubleClick();
       }
     });
+
   }
 
   private handleCursorPos() {
@@ -94,6 +101,7 @@ class StageManager {
         x: (pointer.x - stagePos.x) / scale,
         y: (pointer.y - stagePos.y) / scale
       }
+      console.log(this.pointerPositionRef.value)
     }
   }
 
@@ -167,6 +175,7 @@ class StageManager {
       ease: 'power2.inOut',
       onComplete: () => {
         this.updateLineThickness();
+        this.emitRedraw();
       },
     });
 

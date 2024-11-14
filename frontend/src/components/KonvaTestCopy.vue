@@ -128,7 +128,7 @@ onMounted(() => {
       }
     })
 
-    stage.on('mousemove', (e) => {
+    stage.on('mousemove', (_) => {
       const pointer = stage.getPointerPosition()
       if (pointer) {
         const scale = stage.scaleX()
