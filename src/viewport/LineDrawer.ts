@@ -44,6 +44,12 @@ class LineDrawer {
         this.updatePreview();
       }
     });
+
+    stage.on('redraw', () => {
+      if (this.isDrawing) {
+        this.updatePreview();
+      }
+    });
   }
 
   // In LineDrawer.ts
@@ -55,17 +61,21 @@ class LineDrawer {
     this.isDrawing = true;
     this.isDrawingRef.value = true;
 
+    const scale = this.stageManager.getStage()?.scaleX() || 1;
+
     // Add snap handling
-    const snappedPos = this.snapManager.snapPoint(pos);
+    const snappedPos = this.snapManager.snapPoint(pos, scale);
     this.startPoint = snappedPos;
     this.snapManager.setStartPoint(snappedPos); // For axis locking
+
+    const dashLength = 5 / scale;
 
     // Create preview line
     this.previewLine = new Konva.Line({
       points: [snappedPos.x, snappedPos.y, snappedPos.x, snappedPos.y],
       stroke: '#fff',
       strokeWidth: 2,
-      dash: [5, 5],
+      dash: [dashLength, dashLength],
     });
 
     const layer = this.stageManager.getLayerManager().geometryLayer;
@@ -74,9 +84,12 @@ class LineDrawer {
 
   private updatePreview() {
     if (!this.previewLine || !this.startPoint) return;
+    const scale = this.stageManager.getStage()?.scaleX() || 1;
 
     const currentPos = this.stageManager.pointerPositionRef.value;
-    const snappedPos = this.snapManager.snapPoint(currentPos);
+    const snappedPos = this.snapManager.snapPoint(currentPos, scale);
+
+    const dashLength = 5 / scale
 
     this.previewLine.points([
       this.startPoint.x,
@@ -84,13 +97,15 @@ class LineDrawer {
       snappedPos.x,
       snappedPos.y,
     ]);
+    this.previewLine.dash([dashLength, dashLength])
     this.stageManager.render(this.previewLine.getLayer());
   }
 
   private finishDrawing(endPos: { x: number; y: number }) {
     if (!this.startPoint || !this.previewLine) return;
+    const scale = this.stageManager.getStage()?.scaleX() || 1;
 
-    const snappedEndPos = this.snapManager.snapPoint(endPos);
+    const snappedEndPos = this.snapManager.snapPoint(endPos, scale);
 
     // Create the line data structure
     const lineData = {
@@ -103,7 +118,7 @@ class LineDrawer {
       },
       length: Math.sqrt(
         Math.pow(snappedEndPos.x - this.startPoint.x, 2) +
-          Math.pow(snappedEndPos.y - this.startPoint.y, 2)
+        Math.pow(snappedEndPos.y - this.startPoint.y, 2)
       ),
       angle: Math.atan2(
         snappedEndPos.y - this.startPoint.y,

@@ -32,7 +32,7 @@ export class SnapManager {
     this.lines = this.lines.filter((l) => l.id !== id);
   }
 
-  public snapPoint(point: Point, excludeLineId?: string): Point {
+  public snapPoint(point: Point, scale: number, excludeLineId?: string): Point {
     if (!this.config.enabled) return point;
 
     let snappedPoint = { ...point };
@@ -43,7 +43,7 @@ export class SnapManager {
       const endPoint = this.findNearestEndPoint(point, excludeLineId);
       if (
         endPoint &&
-        this.getDistance(point, endPoint) < this.config.endPointSnapDistance
+        this.getDistance(point, endPoint) < this.config.endPointSnapDistance / scale
       ) {
         snappedPoint = endPoint;
         minDistance = this.getDistance(point, endPoint);
@@ -65,7 +65,7 @@ export class SnapManager {
       const centerPoint = this.findNearestCenterPoint(point, excludeLineId);
       if (
         centerPoint &&
-        this.getDistance(point, centerPoint) < this.config.centerSnapDistance
+        this.getDistance(point, centerPoint) < this.config.centerSnapDistance / scale
       ) {
         const distance = this.getDistance(point, centerPoint);
         if (distance < minDistance) {
@@ -91,7 +91,7 @@ export class SnapManager {
       if (orthogonalPoint) {
         const distance = this.getDistance(point, orthogonalPoint);
         if (
-          distance < this.config.orthogonalSnapDistance &&
+          distance < this.config.orthogonalSnapDistance / scale &&
           distance < minDistance
         ) {
           snappedPoint = orthogonalPoint;

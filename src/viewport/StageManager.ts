@@ -44,6 +44,11 @@ class StageManager {
     this.stage.fire('redraw');
   }
 
+  public emitRedrawAll() {
+    if (!this.stage) return;
+    this.stage.fire('redrawAll');
+  }
+
   getStage(): Konva.Stage | null {
     return this.stage;
   }
@@ -54,7 +59,7 @@ class StageManager {
 
   addGrid() {
     if (!this.stage || !this.layerManager) return;
-    this.grid = new Grid(this.getLayerManager().staticLayer, this.stage);
+    this.grid = new Grid(this.getLayerManager().baseLayer, this.stage);
   }
 
   setupEventHandlers() {
@@ -149,8 +154,7 @@ class StageManager {
         this.emitRedraw();
       },
       onFinish: () => {
-        // Only trigger full redraw once animation is complete
-        this.emitRedraw();
+        this.emitRedrawAll();
       }
     });
 
@@ -198,7 +202,7 @@ class StageManager {
       },
       onFinish: () => {
         // Only trigger full redraw once animation is complete
-        this.emitRedraw();
+        this.emitRedrawAll();
       }
     });
 
@@ -214,14 +218,12 @@ class StageManager {
           shape.strokeWidth(2 / scale);
         }
       });
-      layer.draw();
+      layer.batchDraw();
       return;
     }
     const layers = [
       this.getLayerManager()
-        .geometryLayer /* this.getLayerManager().forcesLayer, this.getLayerManager().resultsLayer */,
-      //this.getLayerManager().staticLayer,
-      this.getLayerManager().baseLayer,
+        .geometryLayer
     ];
     layers.forEach((layer) => {
       if (!layer) return;
@@ -230,7 +232,7 @@ class StageManager {
           shape.strokeWidth(2 / scale);
         }
       });
-      layer.draw();
+      layer.batchDraw();
     });
   }
 }

@@ -60,9 +60,9 @@ onMounted(() => {
     pointerPositionRef = stageManager.pointerPositionRef;
 
     const layerManager = stageManager.getLayerManager();
-    const geometryLayer = layerManager.geometryLayer;
+    const geometryLayer = layerManager.staticLayer;
 
-   /*  for (let i = 0; i < 5; i++) {
+    /* for (let i = 0; i < 1000; i++) {
       const circle = new Konva.Circle({
         x: Math.random() * stage.getStage().width() * 2 - stage.getStage().width() / 2,
         y: Math.random() * stage.getStage().height() * 2 - stage.getStage().height() / 2,
@@ -74,7 +74,7 @@ onMounted(() => {
       geometryLayer.add(circle);
     } */
 
-    const points = [50, 50, 100, 150, 150, 100, 200, 200, 250, 150];
+    /* const points = [50, 50, 100, 150, 150, 100, 200, 200, 250, 150];
     const line = new Konva.Line({
       points: points.concat([250, stage.getStage().height(), 50, stage.getStage().height()]), // Close the shape
       stroke: 'blue',
@@ -86,7 +86,7 @@ onMounted(() => {
     });
     geometryLayer.add(line);
 
-    geometryLayer.draw();
+    geometryLayer.draw(); */
   }
 });
 </script>
