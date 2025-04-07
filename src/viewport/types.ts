@@ -12,6 +12,11 @@ export interface Line {
   angle: number;
 }
 
+export interface SnapResult {
+  snapped: boolean;
+  point: Point;
+}
+
 export interface SnapConfig {
   enabled: boolean;
   endPointSnap: boolean;

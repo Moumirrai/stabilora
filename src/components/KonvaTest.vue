@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import StageManager from '../viewport/StageManager';
-/* import Konva from 'konva';
-import LineDrawer from '../viewport/LineDrawer'; */
+import Konva from 'konva';
+import LineDrawer from '../viewport/LineDrawer';
 
 const stageRef = ref<HTMLDivElement | null>(null);
 const fpsRef = ref<number>(0);
 let pointerPositionRef = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 
-/* const calculateFPS = () => {
+const calculateFPS = () => {
   let lastFrameTime = performance.now();
   const updateFPS = () => {
     const now = performance.now();
@@ -18,22 +18,22 @@ let pointerPositionRef = ref<{ x: number; y: number }>({ x: 0, y: 0 });
     requestAnimationFrame(updateFPS);
   };
   requestAnimationFrame(updateFPS);
-}; */
+};
 
 onMounted(() => {
-  //calculateFPS();
+  calculateFPS();
 
   if (stageRef.value) {
     const stageManager = new StageManager(stageRef.value);
     const stage = stageManager.getStage();
-    //const lineDrawer = new LineDrawer(stageManager);
+    const lineDrawer = new LineDrawer(stageManager);
 
     // Configure snapping
-    /* lineDrawer.setSnapConfig({
+    lineDrawer.setSnapConfig({
       enabled: true,
       endPointSnap: true,
-      gridSnap: true,
-      axisLock: true,
+      gridSnap: false,
+      axisLock: false,
       orthogonalSnap: false,
     });
 
@@ -48,7 +48,7 @@ onMounted(() => {
       if (e.key === 'Escape') {
         lineDrawer.cancel();
       }
-    }); */
+    });
 
     if (!stage) {
       return;
@@ -62,7 +62,7 @@ onMounted(() => {
     const layerManager = stageManager.getLayerManager();
     const geometryLayer = layerManager.geometryLayer;
 
-    /* for (let i = 0; i < 5; i++) {
+   /*  for (let i = 0; i < 5; i++) {
       const circle = new Konva.Circle({
         x: Math.random() * stage.getStage().width() * 2 - stage.getStage().width() / 2,
         y: Math.random() * stage.getStage().height() * 2 - stage.getStage().height() / 2,
@@ -72,7 +72,7 @@ onMounted(() => {
         strokeWidth: 2,
       });
       geometryLayer.add(circle);
-    }
+    } */
 
     const points = [50, 50, 100, 150, 150, 100, 200, 200, 250, 150];
     const line = new Konva.Line({
@@ -84,7 +84,7 @@ onMounted(() => {
       lineCap: 'round',
       lineJoin: 'round',
     });
-    geometryLayer.add(line); */
+    geometryLayer.add(line);
 
     geometryLayer.draw();
   }
@@ -122,5 +122,7 @@ onMounted(() => {
   width: 100vw;
   height: 100vh;
   background: #181818;
+  will-change: transform;
+  transform: translateZ(0);
 }
 </style>

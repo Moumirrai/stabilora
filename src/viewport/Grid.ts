@@ -8,7 +8,6 @@ class Grid {
   constructor(layer: Konva.Layer, stage: Konva.Stage) {
     this.layer = layer;
     stage.on('wheel', () => this.drawGrid(stage));
-    //stage.on('dragmove', () => this.drawGrid(stage));
     stage.on('dragend', () => this.drawGrid(stage));
     stage.on('redraw', () => this.drawGrid(stage));
     this.drawGrid(stage);
@@ -52,13 +51,13 @@ class Grid {
     const startY = Math.floor(viewTop / size) * size;
     const endY = Math.ceil(viewBottom / size) * size;
 
-    const mainLineColor = scale >= 1 ? '#ccc' : '#ccc';
-    const subLineColor = scale >= 1 ? '#eee' : '#eee';
+    const mainLineColor = scale >= 1 ? '#454545' : '#454545';
+    const subLineColor = scale >= 1 ? '#2D2D2D' : '#2D2D2D';
 
     // Fixed line widths
     const mainLineWidth = 1;
-    const subLineWidth = 0.5;
-    const subdivisionWidth = 0.2;
+    const subLineWidth = 1;
+    const subdivisionWidth = 1;
 
     // Draw subdivision lines
     const subDivisions = 5;

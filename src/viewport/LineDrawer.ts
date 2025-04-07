@@ -26,7 +26,8 @@ class LineDrawer {
     const stage = this.stageManager.getStage();
     if (!stage) return;
 
-    stage.on('click', (_) => {
+    stage.on('click', (e) => {
+      if (e.evt.button !== 0) return;
       const pos = this.stageManager.pointerPositionRef.value;
 
       if (!this.isDrawing) {
@@ -83,7 +84,7 @@ class LineDrawer {
       snappedPos.x,
       snappedPos.y,
     ]);
-    this.previewLine.getLayer()?.batchDraw();
+    this.stageManager.render(this.previewLine.getLayer());
   }
 
   private finishDrawing(endPos: { x: number; y: number }) {
@@ -137,7 +138,7 @@ class LineDrawer {
     this.isDrawingRef.value = false;
     this.snapManager.clearStartPoint();
 
-    layer?.batchDraw();
+    this.stageManager.render(layer);
   }
 
   public cancel() {
@@ -148,9 +149,7 @@ class LineDrawer {
     this.startPoint = null;
     this.isDrawing = false;
     this.isDrawingRef.value = false;
-
-    const layer = this.stageManager.getLayerManager().geometryLayer;
-    layer?.batchDraw();
+    this.stageManager.render(this.stageManager.getLayerManager().geometryLayer)
   }
 
   // Add methods to control snapping behavior

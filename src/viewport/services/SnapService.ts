@@ -7,7 +7,7 @@ export class SnapService {
 
   private constructor() {
     this.snapManager = new SnapManager({
-      enabled: true,
+      enabled: false,
       endPointSnapDistance: 15,
       gridSize: 50,
     });

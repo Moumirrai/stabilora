@@ -8,7 +8,7 @@ import { ref } from 'vue';
 class StageManager {
   private stage: Konva.Stage | null = null;
   private layerManager: LayerManager;
-  private zoomSpeed = 0.16;
+  private zoomSpeed = 0.36;
   private maxZoom = 45_000;
   private minZoom = 0.002;
   // @ts-expect-error
@@ -100,7 +100,6 @@ class StageManager {
         x: (pointer.x - stagePos.x) / scale,
         y: (pointer.y - stagePos.y) / scale,
       };
-      console.log(this.pointerPositionRef.value);
     }
   }
 
@@ -128,16 +127,36 @@ class StageManager {
       return;
     }
 
-    this.stage.scale({ x: newScale, y: newScale });
-    console.log(this.stage.scaleX());
+    //this.stage.scale({ x: newScale, y: newScale });
+    //console.log(this.stage.scaleX());
 
     const newPos = {
       x: pointer.x - mousePointTo.x * newScale,
       y: pointer.y - mousePointTo.y * newScale,
     };
-    this.stage.position(newPos);
+    //this.stage.position(newPos);
 
-    this.updateLineThickness();
+    const tween = new Konva.Tween({
+      node: this.stage, // or your layer
+      scaleX: newScale,
+      scaleY: newScale,
+      x: newPos.x,
+      y: newPos.y,
+      duration: 0.1, // in seconds
+      easing: Konva.Easings.EaseOut,
+      onUpdate: () => {
+        this.render();
+        this.emitRedraw();
+      },
+      onFinish: () => {
+        // Only trigger full redraw once animation is complete
+        this.emitRedraw();
+      }
+    });
+
+    tween.play();
+
+    this.render();
   }
 
   private handleDoubleClick() {
@@ -162,31 +181,47 @@ class StageManager {
       y: -box.y * newScale,
     };
 
-    console.log(box);
-    console.log(newPos);
-
-    gsap.to(this.stage, {
+    // Replace GSAP with Konva's animation
+    const tween = new Konva.Tween({
+      node: this.stage,
+      duration: 0.3,
+      easing: Konva.Easings.EaseInOut,
       scaleX: newScale,
       scaleY: newScale,
       x: newPos.x,
       y: newPos.y,
-      duration: 0.3,
-      ease: 'power2.inOut',
-      onComplete: () => {
-        this.updateLineThickness();
+      onUpdate: () => {
+        // Only update line widths, don't trigger full grid redraw during animation
+        this.render();
         this.emitRedraw();
+        // Remove emitRedraw() call here to prevent multiple conflicting redraws
       },
+      onFinish: () => {
+        // Only trigger full redraw once animation is complete
+        this.emitRedraw();
+      }
     });
 
-    this.updateLineThickness();
+    tween.play();
   }
 
-  private updateLineThickness() {
+  public render(layer?: Konva.Layer | null) {
     if (!this.stage) return;
     const scale = this.stage.scaleX();
+    if (layer) {
+      layer.getChildren().forEach((shape) => {
+        if (shape instanceof Konva.Line) {
+          shape.strokeWidth(2 / scale);
+        }
+      });
+      layer.draw();
+      return;
+    }
     const layers = [
       this.getLayerManager()
         .geometryLayer /* this.getLayerManager().forcesLayer, this.getLayerManager().resultsLayer */,
+      //this.getLayerManager().staticLayer,
+      this.getLayerManager().baseLayer,
     ];
     layers.forEach((layer) => {
       if (!layer) return;
@@ -195,7 +230,7 @@ class StageManager {
           shape.strokeWidth(2 / scale);
         }
       });
-      layer.batchDraw();
+      layer.draw();
     });
   }
 }
