@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import StageManager from '../viewport/StageManager';
-import Konva from 'konva';
 import LineDrawer from '../viewport/LineDrawer';
 
 const stageRef = ref<HTMLDivElement | null>(null);
 const fpsRef = ref<number>(0);
 let pointerPositionRef = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 
-const calculateFPS = () => {
+/* const calculateFPS = () => {
   let lastFrameTime = performance.now();
   const updateFPS = () => {
     const now = performance.now();
@@ -18,10 +17,10 @@ const calculateFPS = () => {
     requestAnimationFrame(updateFPS);
   };
   requestAnimationFrame(updateFPS);
-};
+}; */
 
 onMounted(() => {
-  calculateFPS();
+  //calculateFPS();
 
   if (stageRef.value) {
     const stageManager = new StageManager(stageRef.value);
@@ -33,6 +32,7 @@ onMounted(() => {
       enabled: true,
       endPointSnap: true,
       gridSnap: false,
+      gridSize: 1,
       axisLock: false,
       orthogonalSnap: false,
     });
@@ -56,37 +56,7 @@ onMounted(() => {
 
     stageManager.setupEventHandlers();
     stageManager.addGrid();
-    //stageManager.addGrid();
     pointerPositionRef = stageManager.pointerPositionRef;
-
-    const layerManager = stageManager.getLayerManager();
-    const geometryLayer = layerManager.staticLayer;
-
-    /* for (let i = 0; i < 1000; i++) {
-      const circle = new Konva.Circle({
-        x: Math.random() * stage.getStage().width() * 2 - stage.getStage().width() / 2,
-        y: Math.random() * stage.getStage().height() * 2 - stage.getStage().height() / 2,
-        radius: Math.random() * 50 + 10,
-        fill: Konva.Util.getRandomColor(),
-        stroke: 'black',
-        strokeWidth: 2,
-      });
-      geometryLayer.add(circle);
-    } */
-
-    /* const points = [50, 50, 100, 150, 150, 100, 200, 200, 250, 150];
-    const line = new Konva.Line({
-      points: points.concat([250, stage.getStage().height(), 50, stage.getStage().height()]), // Close the shape
-      stroke: 'blue',
-      strokeWidth: 2,
-      fill: 'rgba(0, 0, 255, 0.3)', // Fill color with transparency
-      closed: true,
-      lineCap: 'round',
-      lineJoin: 'round',
-    });
-    geometryLayer.add(line);
-
-    geometryLayer.draw(); */
   }
 });
 </script>
@@ -115,7 +85,6 @@ onMounted(() => {
 
 .pointer-position {
   top: 40px;
-  /* Adjust position to avoid overlap with FPS counter */
 }
 
 .viewport {

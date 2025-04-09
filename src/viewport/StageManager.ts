@@ -1,28 +1,25 @@
 import Konva from 'konva';
-//import { IRect } from 'konva/lib/types';
-import gsap from 'gsap';
 import LayerManager from './LayerManager';
-import Grid from './Grid';
+import Grid from './background/SquareGrid';
+import DotGrid from './background/DotGrid';
+import Ruler from './Ruler';
 import { ref } from 'vue';
 
 class StageManager {
   private stage: Konva.Stage | null = null;
-  private layerManager: LayerManager;
+  public layerManager: LayerManager;
+  private ruler: Ruler | null = null;
   private zoomSpeed = 0.36;
   private maxZoom = 45_000;
   private minZoom = 0.002;
   // @ts-expect-error
-  private grid: Grid | null = null;
+  private grid: Grid | DotGrid | null = null;
+
+  private resizeObserver: ResizeObserver | null = null;
 
   public readonly pointerPositionRef = ref({ x: 0, y: 0 });
 
   constructor(container: HTMLDivElement) {
-    /*  this.stage = new Konva.Stage({
-       container: container,
-       width: container.clientWidth,
-       height: container.clientHeight,
-       draggable: false,
-     }); */
     this.stage = new Konva.Stage({
       container: container,
       width: window.innerWidth,
@@ -30,13 +27,70 @@ class StageManager {
       draggable: false,
     });
 
-    // Center the canvas at (0, 0)
+    // center the canvas at (0, 0)
     this.stage.position({
       x: container.clientWidth / 2,
       y: container.clientHeight / 2,
     });
 
     this.layerManager = new LayerManager(this.stage);
+
+    this.initUILayer();
+    this.addUIComponents();
+
+    this.setupResizeHandling(container);
+  }
+
+  private setupResizeHandling(container: HTMLDivElement) {
+    this.cleanup();
+    this.resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.target === container) {
+          this.handleResize(container);
+        }
+      }
+    });
+
+    this.resizeObserver.observe(container);
+
+    // fallback
+    //window.addEventListener('resize', () => this.handleResize(container));
+  }
+
+  private addUIComponents() {
+    if (!this.stage || !this.layerManager.uiLayer) return;
+    this.ruler = new Ruler(this.layerManager.uiLayer, this.stage);
+  }
+
+  private handleResize(container: HTMLDivElement) {
+    if (!this.stage) return;
+
+    // Store current viewport center in world coordinates
+    const oldWidth = this.stage.width();
+    const oldHeight = this.stage.height();
+    const oldScale = this.stage.scaleX();
+    const oldPosition = this.stage.position();
+
+    // Calculate current center point in world coordinates
+    const centerX = (oldWidth / 2 - oldPosition.x) / oldScale;
+    const centerY = (oldHeight / 2 - oldPosition.y) / oldScale;
+
+    // Update stage size to match container
+    const newWidth = container.clientWidth;
+    const newHeight = container.clientHeight;
+    this.stage.width(newWidth);
+    this.stage.height(newHeight);
+
+    // Calculate new position to maintain the same center point
+    const newPositionX = newWidth / 2 - centerX * oldScale;
+    const newPositionY = newHeight / 2 - centerY * oldScale;
+    this.stage.position({
+      x: newPositionX,
+      y: newPositionY
+    });
+
+    // Redraw everything
+    this.emitRedrawAll();
   }
 
   public emitRedraw() {
@@ -49,6 +103,45 @@ class StageManager {
     this.stage.fire('redrawAll');
   }
 
+  private initUILayer() {
+    if (!this.stage) return;
+
+    // Function to update UI layer position and scale to counter stage transformations
+    const updateUILayer = () => {
+      if (!this.layerManager.uiLayer || !this.stage) return;
+
+      // Apply inverse transformation to cancel out stage transforms
+      const scale = 1 / this.stage.scaleX();
+      const stagePos = this.stage.position();
+
+      this.layerManager.uiLayer.scale({ x: scale, y: scale });
+      this.layerManager.uiLayer.position({
+        x: -stagePos.x * scale,
+        y: -stagePos.y * scale
+      });
+
+      this.layerManager.uiLayer.moveToTop();
+      this.layerManager.uiLayer.batchDraw();
+    };
+
+    // Update UI layer on any stage transformation
+    this.stage.on('dragmove', updateUILayer);
+    this.stage.on('dragend', updateUILayer);
+    this.stage.on('redraw', updateUILayer);
+    this.stage.on('redrawAll', updateUILayer);
+
+    // Initial update
+    updateUILayer();
+  }
+
+  public cleanup() {
+    // Clean up event listeners when component is destroyed
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
+    window.removeEventListener('resize', () => this.handleResize);
+  }
+
   getStage(): Konva.Stage | null {
     return this.stage;
   }
@@ -59,7 +152,8 @@ class StageManager {
 
   addGrid() {
     if (!this.stage || !this.layerManager) return;
-    this.grid = new Grid(this.getLayerManager().baseLayer, this.stage);
+    //this.grid = new Grid(this.getLayerManager().baseLayer, this.stage);
+    this.grid = new DotGrid(this.getLayerManager().baseLayer, this.stage);
   }
 
   setupEventHandlers() {
@@ -132,14 +226,10 @@ class StageManager {
       return;
     }
 
-    //this.stage.scale({ x: newScale, y: newScale });
-    //console.log(this.stage.scaleX());
-
     const newPos = {
       x: pointer.x - mousePointTo.x * newScale,
       y: pointer.y - mousePointTo.y * newScale,
     };
-    //this.stage.position(newPos);
 
     const tween = new Konva.Tween({
       node: this.stage, // or your layer
@@ -150,7 +240,6 @@ class StageManager {
       duration: 0.1, // in seconds
       easing: Konva.Easings.EaseOut,
       onUpdate: () => {
-        this.render();
         this.emitRedraw();
       },
       onFinish: () => {
@@ -159,8 +248,6 @@ class StageManager {
     });
 
     tween.play();
-
-    this.render();
   }
 
   private handleDoubleClick() {
@@ -195,10 +282,7 @@ class StageManager {
       x: newPos.x,
       y: newPos.y,
       onUpdate: () => {
-        // Only update line widths, don't trigger full grid redraw during animation
-        this.render();
         this.emitRedraw();
-        // Remove emitRedraw() call here to prevent multiple conflicting redraws
       },
       onFinish: () => {
         // Only trigger full redraw once animation is complete
@@ -209,32 +293,6 @@ class StageManager {
     tween.play();
   }
 
-  public render(layer?: Konva.Layer | null) {
-    if (!this.stage) return;
-    const scale = this.stage.scaleX();
-    if (layer) {
-      layer.getChildren().forEach((shape) => {
-        if (shape instanceof Konva.Line) {
-          shape.strokeWidth(2 / scale);
-        }
-      });
-      layer.batchDraw();
-      return;
-    }
-    const layers = [
-      this.getLayerManager()
-        .geometryLayer
-    ];
-    layers.forEach((layer) => {
-      if (!layer) return;
-      layer.getChildren().forEach((shape) => {
-        if (shape instanceof Konva.Line) {
-          shape.strokeWidth(2 / scale);
-        }
-      });
-      layer.batchDraw();
-    });
-  }
 }
 
 export default StageManager;

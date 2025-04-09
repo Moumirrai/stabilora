@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue';
 import StageManager from '../viewport/StageManager';
 
 const stageRef = ref<HTMLDivElement | null>(null);
-let pointerPositionRef = ref<{ x: number; y: number }>({ x: 0, y: 0 });
+//let pointerPositionRef = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 
 onMounted(() => {
 
@@ -17,7 +17,7 @@ onMounted(() => {
 
     stageManager.setupEventHandlers();
     stageManager.addGrid();
-    pointerPositionRef = stageManager.pointerPositionRef;
+    //pointerPositionRef = stageManager.pointerPositionRef;
 
     const layerManager = stageManager.getLayerManager();
     const geometryLayer = layerManager.geometryLayer;

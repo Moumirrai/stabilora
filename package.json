@@ -10,8 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "gsap": "^3.12.5",
     "konva": "^9.3.16",
+    "svgcanvas": "^2.6.0",
+    "svgo": "^3.3.2",
     "uuid": "^11.0.3",
     "vue": "^3.5.12"
   },

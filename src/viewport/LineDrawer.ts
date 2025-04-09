@@ -68,14 +68,13 @@ class LineDrawer {
     this.startPoint = snappedPos;
     this.snapManager.setStartPoint(snappedPos); // For axis locking
 
-    const dashLength = 5 / scale;
-
     // Create preview line
     this.previewLine = new Konva.Line({
       points: [snappedPos.x, snappedPos.y, snappedPos.x, snappedPos.y],
       stroke: '#fff',
       strokeWidth: 2,
-      dash: [dashLength, dashLength],
+      dash: [5, 5],
+      strokeScaleEnabled: false,
     });
 
     const layer = this.stageManager.getLayerManager().geometryLayer;
@@ -89,16 +88,12 @@ class LineDrawer {
     const currentPos = this.stageManager.pointerPositionRef.value;
     const snappedPos = this.snapManager.snapPoint(currentPos, scale);
 
-    const dashLength = 5 / scale
-
     this.previewLine.points([
       this.startPoint.x,
       this.startPoint.y,
       snappedPos.x,
       snappedPos.y,
     ]);
-    this.previewLine.dash([dashLength, dashLength])
-    this.stageManager.render(this.previewLine.getLayer());
   }
 
   private finishDrawing(endPos: { x: number; y: number }) {
@@ -140,6 +135,7 @@ class LineDrawer {
       stroke: '#f14c4c',
       strokeWidth: 2,
       id: lineData.id, // Store the ID for later reference
+      strokeScaleEnabled: false,
     });
 
     const layer = this.stageManager.getLayerManager().geometryLayer;
@@ -153,7 +149,7 @@ class LineDrawer {
     this.isDrawingRef.value = false;
     this.snapManager.clearStartPoint();
 
-    this.stageManager.render(layer);
+    //this.stageManager.render(layer);
   }
 
   public cancel() {
@@ -164,7 +160,6 @@ class LineDrawer {
     this.startPoint = null;
     this.isDrawing = false;
     this.isDrawingRef.value = false;
-    this.stageManager.render(this.stageManager.getLayerManager().geometryLayer)
   }
 
   // Add methods to control snapping behavior

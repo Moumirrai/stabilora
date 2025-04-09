@@ -7,25 +7,10 @@ class Grid {
 
   constructor(layer: Konva.Layer, stage: Konva.Stage) {
     this.layer = layer;
-    //stage.on('wheel', () => this.drawGrid(stage));
     stage.on('dragend', () => this.drawGrid(stage));
     stage.on('redrawAll', () => this.drawGrid(stage));
     this.drawGrid(stage);
   }
-
-  /* private getGridSize(scale: number): number {
-    const baseSize = this.baseSize;
-    // Add more thresholds for smaller scales
-    if (scale >= 4) return baseSize / 4;
-    if (scale >= 2) return baseSize / 2;
-    if (scale >= 1) return baseSize;
-    if (scale >= 0.5) return baseSize * 2;
-    if (scale >= 0.2) return baseSize * 4;
-    if (scale >= 0.1) return baseSize * 8;
-    if (scale >= 0.05) return baseSize * 16;
-    if (scale >= 0.02) return baseSize * 32;
-    return baseSize * 64; // For very low zoom levels
-  } */
 
   private getGridSize(scale: number): number {
     const power = Math.round(-Math.log2(scale));
