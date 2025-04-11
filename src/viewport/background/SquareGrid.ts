@@ -1,15 +1,26 @@
 import Konva from 'konva';
 
 class Grid {
-  private layer: Konva.Layer;
+  private gridGroup: Konva.Group;
   private readonly baseSize = 100;
   //private readonly zoomThresholds = [0.1, 0.2, 0.5, 1, 2, 4, 8];
 
   constructor(layer: Konva.Layer, stage: Konva.Stage) {
-    this.layer = layer;
+    this.gridGroup = new Konva.Group({
+      draggable: false,
+      listening: false,
+    });
+    layer.add(this.gridGroup);
     stage.on('dragend', () => this.drawGrid(stage));
     stage.on('redrawAll', () => this.drawGrid(stage));
     this.drawGrid(stage);
+  }
+
+  public destroy() {
+    this.gridGroup.destroyChildren();
+    this.gridGroup.destroy();
+    this.gridGroup.getLayer()?.off('dragend');
+    this.gridGroup.getLayer()?.off('redrawAll');
   }
 
   private getGridSize(scale: number): number {
@@ -19,7 +30,7 @@ class Grid {
 
   private drawGrid(stage: Konva.Stage) {
     console.log('Drawing grid');
-    this.layer.destroyChildren();
+    this.gridGroup.destroyChildren();
 
     const scale = stage.scaleX();
     const position = stage.position();
@@ -54,7 +65,7 @@ class Grid {
     for (let x = startX; x <= endX; x += size / subDivisions) {
       if (Math.abs(x % size) > 0.1) {
         // Skip main grid lines
-        this.layer.add(
+        this.gridGroup.add(
           new Konva.Line({
             points: [x, startY, x, endY],
             stroke: subLineColor,
@@ -69,7 +80,7 @@ class Grid {
     for (let y = startY; y <= endY; y += size / subDivisions) {
       if (Math.abs(y % size) > 0.1) {
         // Skip main grid lines
-        this.layer.add(
+        this.gridGroup.add(
           new Konva.Line({
             points: [startX, y, endX, y],
             stroke: subLineColor,
@@ -83,8 +94,8 @@ class Grid {
 
     // Draw main grid lines
     for (let x = startX; x <= endX; x += size) {
-      const isMainLine = Math.abs(x) < 0.1;
-      this.layer.add(
+      const isMainLine = Math.abs(x) == 0;
+      this.gridGroup.add(
         new Konva.Line({
           points: [x, startY, x, endY],
           stroke: isMainLine ? '#ff0000' : mainLineColor, // Red for Y axis
@@ -95,8 +106,8 @@ class Grid {
     }
 
     for (let y = startY; y <= endY; y += size) {
-      const isMainLine = Math.abs(y) < 0.1;
-      this.layer.add(
+      const isMainLine = Math.abs(y) == 0;
+      this.gridGroup.add(
         new Konva.Line({
           points: [startX, y, endX, y],
           stroke: isMainLine ? '#00ff00' : mainLineColor, // Green for X axis
@@ -106,7 +117,7 @@ class Grid {
       );
     }
 
-    this.layer.batchDraw();
+    this.gridGroup.getLayer()?.batchDraw();
   }
 }
 

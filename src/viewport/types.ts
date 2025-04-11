@@ -29,3 +29,9 @@ export interface SnapConfig {
   orthogonalSnap: boolean;
   orthogonalSnapDistance: number;
 }
+
+export enum GridType {
+  DOT = 'dot',
+  SQUARE = 'square',
+  NONE = 'none',
+}

@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import StageManager from '../viewport/StageManager';
 import LineDrawer from '../viewport/LineDrawer';
+import { GridType } from '../viewport/types';
 
 const stageRef = ref<HTMLDivElement | null>(null);
 const fpsRef = ref<number>(0);
@@ -55,7 +56,7 @@ onMounted(() => {
     }
 
     stageManager.setupEventHandlers();
-    stageManager.addGrid();
+    stageManager.setGrid(GridType.DOT)
     pointerPositionRef = stageManager.pointerPositionRef;
   }
 });

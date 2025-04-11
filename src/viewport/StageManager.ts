@@ -4,6 +4,7 @@ import Grid from './background/SquareGrid';
 import DotGrid from './background/DotGrid';
 import Ruler from './Ruler';
 import { ref } from 'vue';
+import { GridType } from './types';
 
 class StageManager {
   private stage: Konva.Stage | null = null;
@@ -12,7 +13,6 @@ class StageManager {
   private zoomSpeed = 0.36;
   private maxZoom = 45_000;
   private minZoom = 0.002;
-  // @ts-expect-error
   private grid: Grid | DotGrid | null = null;
 
   private resizeObserver: ResizeObserver | null = null;
@@ -150,10 +150,20 @@ class StageManager {
     return this.layerManager;
   }
 
-  addGrid() {
+  setGrid(gridType: GridType) {
     if (!this.stage || !this.layerManager) return;
-    //this.grid = new Grid(this.getLayerManager().baseLayer, this.stage);
-    this.grid = new DotGrid(this.getLayerManager().baseLayer, this.stage);
+    if (this.grid) this.grid.destroy();
+    switch (gridType) {
+      case GridType.SQUARE:
+        this.grid = new Grid(this.layerManager.baseLayer, this.stage);
+        break;
+      case GridType.DOT:
+        this.grid = new DotGrid(this.layerManager.baseLayer, this.stage);
+        break;
+      default:
+        this.grid = null;
+        break;
+    }
   }
 
   setupEventHandlers() {
