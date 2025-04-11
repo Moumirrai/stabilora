@@ -3,7 +3,7 @@ import LayerManager from './LayerManager';
 import Grid from './background/SquareGrid';
 import DotGrid from './background/DotGrid';
 import Ruler from './Ruler';
-import { ref } from 'vue';
+import { writable } from 'svelte/store';
 import { GridType } from './types';
 
 class StageManager {
@@ -17,7 +17,7 @@ class StageManager {
 
   private resizeObserver: ResizeObserver | null = null;
 
-  public readonly pointerPositionRef = ref({ x: 0, y: 0 });
+  public readonly pointerPositionRef = writable({ x: 0, y: 0 });
 
   constructor(container: HTMLDivElement) {
     this.stage = new Konva.Stage({
@@ -205,10 +205,10 @@ class StageManager {
     if (pointer) {
       const scale = this.stage.scaleX();
       const stagePos = this.stage.position();
-      this.pointerPositionRef.value = {
+      this.pointerPositionRef.set({
         x: (pointer.x - stagePos.x) / scale,
         y: (pointer.y - stagePos.y) / scale,
-      };
+      });
     }
   }
 

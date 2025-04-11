@@ -1,5 +1,5 @@
 // SnapManager.ts
-import { Point, Line, SnapConfig } from './types';
+import type { Point, Line, SnapConfig } from './types';
 
 export class SnapManager {
   private lines: Line[] = [];

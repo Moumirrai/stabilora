@@ -1,11 +1,11 @@
 // LineDrawer.ts
 import Konva from 'konva';
 import StageManager from './StageManager';
-import { ref } from 'vue';
 import { SnapManager } from './SnapManager';
 import { v4 as uuidv4 } from 'uuid'; // for generating unique IDs
 import { SnapService } from './services/SnapService';
 import type { SnapConfig } from './types';
+import { get } from 'svelte/store';
 
 class LineDrawer {
   private stageManager: StageManager;
@@ -14,7 +14,7 @@ class LineDrawer {
   private startPoint: { x: number; y: number } | null = null;
   private previewLine: Konva.Line | null = null;
 
-  public readonly isDrawingRef = ref(false);
+  public isDrawingRef = false;
 
   constructor(stageManager: StageManager) {
     this.stageManager = stageManager;
@@ -28,7 +28,7 @@ class LineDrawer {
 
     stage.on('click', (e) => {
       if (e.evt.button !== 0) return;
-      const pos = this.stageManager.pointerPositionRef.value;
+      const pos = get(this.stageManager.pointerPositionRef);
 
       if (!this.isDrawing) {
         // Start drawing
@@ -59,7 +59,7 @@ class LineDrawer {
 
   private startDrawing(pos: { x: number; y: number }) {
     this.isDrawing = true;
-    this.isDrawingRef.value = true;
+    this.isDrawingRef = true;
 
     const scale = this.stageManager.getStage()?.scaleX() || 1;
 
@@ -85,7 +85,7 @@ class LineDrawer {
     if (!this.previewLine || !this.startPoint) return;
     const scale = this.stageManager.getStage()?.scaleX() || 1;
 
-    const currentPos = this.stageManager.pointerPositionRef.value;
+    const currentPos = get(this.stageManager.pointerPositionRef);
     const snappedPos = this.snapManager.snapPoint(currentPos, scale);
 
     this.previewLine.points([
@@ -146,7 +146,7 @@ class LineDrawer {
     this.previewLine = null;
     this.startPoint = null;
     this.isDrawing = false;
-    this.isDrawingRef.value = false;
+    this.isDrawingRef = false;
     this.snapManager.clearStartPoint();
 
     //this.stageManager.render(layer);
@@ -159,7 +159,7 @@ class LineDrawer {
     }
     this.startPoint = null;
     this.isDrawing = false;
-    this.isDrawingRef.value = false;
+    this.isDrawingRef = false;
   }
 
   // Add methods to control snapping behavior
