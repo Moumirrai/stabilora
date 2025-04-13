@@ -20,7 +20,7 @@ class LayerManager {
     listening: boolean
   ): Konva.Layer {
     const layer = new Konva.Layer();
-    layer.zIndex(zIndex);
+    //layer.zIndex(zIndex);
     layer.name(name);
     layer.visible(!hidden);
     layer.listening(listening);

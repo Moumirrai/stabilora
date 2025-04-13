@@ -33,7 +33,6 @@ class DotGrid {
   }
 
   private drawGrid(stage: Konva.Stage) {
-    console.log('Drawing grid');
     this.gridGroup.destroyChildren();
 
     const scale = stage.scaleX();
@@ -143,6 +142,7 @@ class DotGrid {
         }
       },
       listening: false,
+      perfectDrawEnabled: false,
     });
 
     this.gridGroup.add(dotsShape);

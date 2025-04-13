@@ -1,70 +1,76 @@
 import Konva from 'konva';
-import type { Unsubscriber } from 'svelte/store';
-import { modelStore } from '../stores/model/store'; // Adjust path if needed
-import type { Model, Node, Element } from '../stores/model/model.types'; // Adjust path if needed
-import type StageManager from '../viewport/StageManager'; // Adjust path if needed
+import { get, type Unsubscriber } from 'svelte/store';
+import { modelStore } from '../stores/model/store';
+import type { Model } from '../stores/model/model.types';
+import type StageManager from '../viewport/StageManager';
+import NodeRenderer from './NodeRenderer';
+import ElementRenderer from './ElementRenderer';
 
 class ModelRenderer {
     private stageManager: StageManager;
     private targetLayer: Konva.Layer;
     private storeUnsubscriber: Unsubscriber | null = null;
+    private nodeRenderer: NodeRenderer;
+    private elementRenderer: ElementRenderer;
 
-    private nodeRadius = 5;
-    private nodeColor = '#ffffff'; 
-
-    private elementColor = '#f14c4c';
-    private elementStrokeWidth = 2;
 
     constructor(stageManager: StageManager) {
         this.stageManager = stageManager;
         const layer = stageManager.getLayerManager().geometryLayer;
         this.targetLayer = layer;
+        this.nodeRenderer = new NodeRenderer(this.targetLayer, this.stageManager);
+        this.elementRenderer = new ElementRenderer(this.targetLayer);
     }
 
     public initialize(): void {
         this.storeUnsubscriber = modelStore.subscribe(model => {
             this.drawModel(model);
         });
+        const stage = this.stageManager.getStage();
+        if (!stage) return;
+        stage.on('redrawAll redraw', () => {
+            this.drawModel(get(modelStore));
+        })
+        stage.on('dblclick', (e) => {
+            //middle mouse button only
+            if (e.evt.button === 1) {
+                this.fitInView(300);
+            }
+        });
+        this.fitInView(0);
+    }
+
+    public fitInView(duration: number): void {
+        const stage = this.stageManager.getStage();
+        if (!stage) return;
+        const rect = this.targetLayer.getClientRect({ relativeTo: stage })
+        if (rect.width === 0 && rect.height === 0) { //TODO: rework this
+            rect.x = -2000;
+            rect.y = -2000;
+            rect.width = 4000;
+            rect.height = 4000;
+        }
+        const maxSide = Math.max(rect.width, rect.height);
+        const margin = maxSide * 0.05; //margin of 5%
+        rect.x -= margin;
+        rect.y -= margin;
+        rect.width += margin * 2;
+        rect.height += margin * 2;
+        this.stageManager.zoomToRect(rect, duration)
     }
 
     private drawModel(model: Model): void {
         this.targetLayer.destroyChildren();
+        
+        model.elements.forEach(element => {
+            this.elementRenderer.drawElement(element);
+        });
 
         model.nodes.forEach(node => {
-            this.drawNode(node);
+            this.nodeRenderer.drawNode(node);
         });
 
-        model.elements.forEach(element => {
-            this.drawElement(element);
-        });
-
-        this.targetLayer.batchDraw();
-    }
-
-    private drawNode(node: Node): void {
-        const circle = new Konva.Circle({
-            x: node.dx,
-            y: node.dy,
-            radius: this.nodeRadius / (this.stageManager.getStage()?.scaleX() || 1), // Adjust radius for zoom
-            fill: this.nodeColor,
-            draggable: false,
-            id: `node-${node.id}`,
-            scaleX: 1 / (this.stageManager.getStage()?.scaleX() || 1),
-            scaleY: 1 / (this.stageManager.getStage()?.scaleY() || 1),
-            strokeScaleEnabled: false,
-        });
-        this.targetLayer.add(circle);
-    }
-
-    private drawElement(element: Element): void {
-        const line = new Konva.Line({
-            points: [element.nodeA.dx, element.nodeA.dy, element.nodeB.dx, element.nodeB.dy],
-            stroke: this.elementColor,
-            strokeWidth: this.elementStrokeWidth,
-            strokeScaleEnabled: false,
-            id: `element-${element.id}`,
-        });
-        this.targetLayer.add(line);
+        this.targetLayer.draw();
     }
 
     public destroy(): void {
@@ -72,6 +78,7 @@ class ModelRenderer {
             this.storeUnsubscriber();
             this.storeUnsubscriber = null;
         }
+        // Potentially add destroy methods to NodeRenderer/ElementRenderer if needed
     }
 }
 

@@ -60,25 +60,25 @@ class StageManager {
   public destroy(): void {
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
+      this.resizeObserver = null;
     }
     window.removeEventListener('resize', () => this.handleResize);
     if (this.stage) {
-      this.stage.off('mousedown');
-      this.stage.off('mouseup');
-      this.stage.off('wheel');
-      this.stage.off('dragmove');
-      this.stage.off('dragend');
-      this.stage.off('redraw');
-      this.stage.off('redrawAll');
+      this.stage.off(this.eventNs);
+      this.stage.off(this.uiEventNs);
       this.stage.destroy();
+      this.stage = null;
     }
   }
 
   public zoomToRect(box: IRect, animationDuration = 0.3) {
     if (!this.stage) return;
 
-    const scaleX = this.stage.width() / box.width;
-    const scaleY = this.stage.height() / box.height;
+    const stageWidth = this.stage.width();
+    const stageHeight = this.stage.height();
+
+    const scaleX = stageWidth / box.width;
+    const scaleY = stageHeight / box.height;
     const newScale = Math.min(scaleX, scaleY);
 
     if (newScale < this.config.minZoom || newScale > this.config.maxZoom) {
@@ -86,9 +86,15 @@ class StageManager {
       return;
     }
 
+    const boxCenterX = box.x + box.width / 2;
+    const boxCenterY = box.y + box.height / 2;
+
+    const stageCenterX = stageWidth / 2;
+    const stageCenterY = stageHeight / 2;
+
     const newPos = {
-      x: -box.x * newScale,
-      y: -box.y * newScale,
+      x: stageCenterX - boxCenterX * newScale,
+      y: stageCenterY - boxCenterY * newScale,
     };
 
     if (animationDuration <= 0) {

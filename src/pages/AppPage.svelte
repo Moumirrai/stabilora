@@ -5,18 +5,23 @@
   import Sidebar from '$lib/app/Sidebar.svelte';
 </script>
 
-<main class="h-screen flex flex-col">
-  <div class="md:block">
+
+<div class="h-screen grid grid-rows-[auto_1fr]">
+  <div class="md:block border-b">
     <Menu />
-    <div class="border-t"></div>
   </div>
-  <div class="bg-background flex flex-grow overflow-hidden">
-    <Sidebar class="w-80 flex-shrink-0" />
-    <div class="flex-grow border-l">
+
+  <div class="grid grid-cols-[auto_1fr] overflow-hidden">
+    <Sidebar class="w-80 flex-shrink-0 border-r overflow-y-auto" />
+    <div class="relative overflow-hidden min-w-0 min-h-0">
       <KonvaTest />
     </div>
   </div>
-</main>
+</div>
 
 <style>
+  :global(.konva-container-wrapper) {
+    width: 100%;
+    height: 100%;
+  }
 </style>
