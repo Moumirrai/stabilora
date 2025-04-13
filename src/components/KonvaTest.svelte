@@ -1,33 +1,23 @@
 <script lang="ts">
-  import { onMount, onDestroy, getContext } from 'svelte';
+  import { onMount, onDestroy, tick } from 'svelte';
   import StageManager from '../viewport/StageManager';
   import LineDrawer from '../viewport/LineDrawer';
-  import { GridType } from '../viewport/types';
-  import { pointerPositionRefKey } from '../viewport/symbols';
-
+  import ModelRenderer from '../rendering/ModelRenderer';
+  import DotGrid from '../viewport/background/DotGrid';
+  import Ruler from '../viewport/Ruler';
   let stageRef: HTMLDivElement;
-  let fps: number = 0;
-  let pointerPosition: { x: number; y: number } = { x: 0, y: 0 };
+  let modelRenderer: ModelRenderer | null = null;
+  let keydownHandler: (e: KeyboardEvent) => void;
 
-  /* const calculateFPS = () => {
-      let lastFrameTime = performance.now();
-      const updateFPS = () => {
-        const now = performance.now();
-        const delta = now - lastFrameTime;
-        fps = Math.round(1000 / delta);
-        lastFrameTime = now;
-        requestAnimationFrame(updateFPS);
-      };
-      requestAnimationFrame(updateFPS);
-    }; */
-
-  onMount(() => {
-    //calculateFPS();
-
+  onMount(async () => {
+    await tick();
     if (stageRef) {
       const stageManager = new StageManager(stageRef);
       const stage = stageManager.getStage();
       const lineDrawer = new LineDrawer(stageManager);
+
+      modelRenderer = new ModelRenderer(stageManager);
+      modelRenderer.initialize();
 
       // Configure snapping
       lineDrawer.setSnapConfig({
@@ -39,8 +29,9 @@
         orthogonalSnap: false,
       });
 
-      const keydownHandler = (e: KeyboardEvent) => {
+      keydownHandler = (e: KeyboardEvent) => {
         if (e.key === 'l') {
+          console.log('l');
           lineDrawer.startNew();
         }
         if (e.key === 'Escape') {
@@ -54,49 +45,15 @@
         return;
       }
 
-      stageManager.setupEventHandlers();
-      stageManager.setGrid(GridType.DOT);
-      stageManager.pointerPositionRef.subscribe((value) => {
-        pointerPosition = value;
-      });
-
-      onDestroy(() => {
-        window.removeEventListener('keydown', keydownHandler);
-      });
+      new DotGrid(stageManager.layerManager.baseLayer, stage);
+      new Ruler(stageManager.layerManager.uiLayer, stage);
     }
+  });
+
+  onDestroy(() => {
+    window.removeEventListener('keydown', keydownHandler);
+    modelRenderer?.destroy();
   });
 </script>
 
-<div bind:this={stageRef} class="viewport"></div>
-<div class="fps-counter">FPS: {fps}</div>
-<div class="pointer-position">
-  Pointer: {pointerPosition.x.toPrecision(6)}, {pointerPosition.y.toPrecision(
-    6
-  )}
-</div>
-
-<style>
-  .fps-counter,
-  .pointer-position {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 5px;
-    border-radius: 3px;
-    font-family: monospace;
-  }
-
-  .pointer-position {
-    top: 40px;
-  }
-
-  .viewport {
-    width: 100vw;
-    height: 100vh;
-    background: #181818;
-    will-change: transform;
-    transform: translateZ(0);
-  }
-</style>
+<div bind:this={stageRef} class="h-full"></div>

@@ -16,6 +16,8 @@ class LineDrawer {
 
   public isDrawingRef = false;
 
+  private active: boolean = false;
+
   constructor(stageManager: StageManager) {
     this.stageManager = stageManager;
     this.snapManager = SnapService.getInstance().getSnapManager();
@@ -26,8 +28,8 @@ class LineDrawer {
     const stage = this.stageManager.getStage();
     if (!stage) return;
 
-    stage.on('click', (e) => {
-      if (e.evt.button !== 0) return;
+    /* stage.on('click', (e) => {
+      if (!this.active || e.evt.button !== 0) return;
       const pos = get(this.stageManager.pointerPositionRef);
 
       if (!this.isDrawing) {
@@ -37,10 +39,10 @@ class LineDrawer {
         // Finish drawing
         this.finishDrawing(pos);
       }
-    });
+    }); */
 
     stage.on('mousemove', () => {
-      if (this.isDrawing) {
+      if (this.isDrawing && this.active) {
         this.updatePreview();
       }
     });
@@ -54,7 +56,8 @@ class LineDrawer {
 
   // In LineDrawer.ts
   public startNew() {
-    this.isDrawing = true;
+    this.active = true;
+    //this.isDrawing = true;
   }
 
   private startDrawing(pos: { x: number; y: number }) {
@@ -85,7 +88,7 @@ class LineDrawer {
     if (!this.previewLine || !this.startPoint) return;
     const scale = this.stageManager.getStage()?.scaleX() || 1;
 
-    const currentPos = get(this.stageManager.pointerPositionRef);
+    /* const currentPos = get(this.stageManager.pointerPositionRef);
     const snappedPos = this.snapManager.snapPoint(currentPos, scale);
 
     this.previewLine.points([
@@ -93,7 +96,7 @@ class LineDrawer {
       this.startPoint.y,
       snappedPos.x,
       snappedPos.y,
-    ]);
+    ]); */
   }
 
   private finishDrawing(endPos: { x: number; y: number }) {
@@ -149,6 +152,8 @@ class LineDrawer {
     this.isDrawingRef = false;
     this.snapManager.clearStartPoint();
 
+    this.startNew(); // Start a new line drawing session
+
     //this.stageManager.render(layer);
   }
 
@@ -160,6 +165,7 @@ class LineDrawer {
     this.startPoint = null;
     this.isDrawing = false;
     this.isDrawingRef = false;
+    this.active = false;
   }
 
   // Add methods to control snapping behavior

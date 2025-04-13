@@ -5,6 +5,8 @@ class Ruler {
     private rulerGroup: Konva.Group;
     private layer: Konva.Layer;
     private stage: Konva.Stage;
+    private rulerBackground: Konva.Rect | null = null;
+    private margin: number = 200;
 
     constructor(layer: Konva.Layer, stage: Konva.Stage) {
         this.rulerGroup = new Konva.Group();
@@ -29,6 +31,8 @@ class Ruler {
             shadowOpacity: 0.3,
             name: 'rulerBackground'
         });
+
+        this.rulerBackground = rect;
 
         this.rulerGroup.add(rect);
         this.rulerGroup.add(this.tickGroup);
@@ -62,6 +66,10 @@ class Ruler {
         const position = this.stage.position();
         const stageHeight = this.stage.height();
 
+        this.rulerBackground?.setAttrs({
+            height: stageHeight,
+        });
+
         // visible range in world coordinates
         const viewTop = -position.y / scale;
         const viewBottom = (stageHeight - position.y) / scale;
@@ -84,7 +92,7 @@ class Ruler {
             const screenY = position.y + y * scale;
 
             // Skip if out of view
-            if (screenY < 0 || screenY > stageHeight) continue;
+            if (screenY + this.margin < 0 || screenY - this.margin > stageHeight) continue;
 
             // Create main tick mark
             const tick = new Konva.Line({
@@ -97,7 +105,7 @@ class Ruler {
             const label = new Konva.Text({
                 x: 12,
                 y: screenY - 8,
-                text: this.formatCoordinate(-y), // Negative because y-axis is flipped
+                text: this.formatCoordinate(y),
                 fontSize: 11,
                 fontFamily: 'monospace',
                 fill: 'white',

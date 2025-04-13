@@ -1,20 +1,15 @@
-import { 
-    LoadCase, 
-    NodeConstraint 
-} from './serializable.types';
 
-// WORKING MODEL TYPES
 export interface Model {
     elements: Element[];
     nodes: Node[];
-    loadCases: LoadCase[];
+    //loadCases: LoadCase[];
 }
 
 export interface Element {
     id: string;
     nodeA: Node; // Direct reference
     nodeB: Node; // Direct reference
-    loads: Record<string, ElementLoad>; // loadCaseId -> loads
+    //loads: Record<string, ElementLoad>; // loadCaseId -> loads
 }
 
 export interface Node {
@@ -22,11 +17,11 @@ export interface Node {
     name: number;
     dx: number;
     dy: number;
-    constraint: NodeConstraint;
-    loads: Record<string, NodeLoad>; // loadCaseId -> loads
+    //constraint: NodeConstraint;
+    //loads: Record<string, NodeLoad>; // loadCaseId -> loads
 }
 
-// Strongly typed loads
+/* // Strongly typed loads
 export interface BaseLoad {
     id: string;
 }
@@ -65,4 +60,4 @@ export interface PointForceNodeLoad extends NodeLoad {
 export interface PointMomentNodeLoad extends NodeLoad {
     type: 'moment';
     value: number;
-}
+} */
