@@ -19,7 +19,7 @@ class ModelRenderer {
         const layer = stageManager.getLayerManager().geometryLayer;
         this.targetLayer = layer;
         this.nodeRenderer = new NodeRenderer(this.targetLayer, this.stageManager);
-        this.elementRenderer = new ElementRenderer(this.targetLayer);
+        this.elementRenderer = new ElementRenderer(this.targetLayer, this.stageManager);
     }
 
     public initialize(): void {
@@ -32,6 +32,7 @@ class ModelRenderer {
             this.drawModel(get(modelStore));
         })
         stage.on('dblclick', (e) => {
+            console.log(stage.scaleX());
             //middle mouse button only
             if (e.evt.button === 1) {
                 this.fitInView(300);

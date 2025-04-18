@@ -7,6 +7,7 @@ class DotGrid {
   private readonly mainDotSize = 2; // Fixed pixel size
   private readonly subDotSize = 1; // Fixed pixel size
   private readonly axisLineWidth = 1; // Fixed pixel size for axis lines
+  private readonly marginFactor = 0.8;
 
   constructor(layer: Konva.Layer, stage: Konva.Stage) {
     this.stage = stage;
@@ -44,11 +45,14 @@ class DotGrid {
 
     const size = this.getGridSize(scale);
 
+    const marginX = stageWidth * this.marginFactor;
+    const marginY = stageHeight * this.marginFactor;
+
     // Calculate visible area considering the scale
-    const viewLeft = (-position.x - stageWidth) / scale;
-    const viewRight = (-position.x + stageWidth * 2) / scale;
-    const viewTop = (-position.y - stageHeight) / scale;
-    const viewBottom = (-position.y + stageHeight * 2) / scale;
+    const viewLeft = (-position.x - marginX) / scale;
+    const viewRight = (-position.x + stageWidth + marginX) / scale;
+    const viewTop = (-position.y - marginY) / scale;
+    const viewBottom = (-position.y + stageHeight + marginY) / scale;
 
     const startX = Math.floor(viewLeft / size) * size;
     const endX = Math.ceil(viewRight / size) * size;
@@ -72,7 +76,7 @@ class DotGrid {
         context.lineWidth = axisWidth;
         context.strokeStyle = axisColor;
         context.globalAlpha = 0.7;
-        
+
         // X-axis (horizontal line)
         if (viewTop <= 0 && viewBottom >= 0) {
           context.beginPath();
@@ -80,7 +84,7 @@ class DotGrid {
           context.lineTo(endX, 0);
           context.stroke();
         }
-        
+
         // Y-axis (vertical line)
         if (viewLeft <= 0 && viewRight >= 0) {
           context.beginPath();
@@ -109,7 +113,7 @@ class DotGrid {
             }
           }
         }
-        
+
         context.globalAlpha = 0.3;
 
         // Only draw subdivisions when zoomed in enough

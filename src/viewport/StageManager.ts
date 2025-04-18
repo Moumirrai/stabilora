@@ -1,6 +1,7 @@
 import Konva from 'konva';
 import LayerManager from './LayerManager';
 import type { IRect } from 'konva/lib/types';
+import SelectionManager from './SelectionManager';
 
 export interface StageManagerConfig {
   zoomEnabled?: boolean;
@@ -18,6 +19,7 @@ class StageManager {
   public layerManager: LayerManager;
   private resizeObserver: ResizeObserver | null = null;
   private config: Required<StageManagerConfig>;
+  private selectionManager: SelectionManager;
 
   // namespaces for event listeners
   private readonly eventNs = '.stageManagerEvents';
@@ -28,7 +30,7 @@ class StageManager {
     this.config = {
       zoomEnabled: initialConfig.zoomEnabled ?? true,
       minZoom: initialConfig.minZoom ?? 0.002,
-      maxZoom: initialConfig.maxZoom ?? 45_000,
+      maxZoom: initialConfig.maxZoom ?? 1_000,
       zoomSpeed: initialConfig.zoomSpeed ?? 0.36,
       zoomDuration: initialConfig.zoomDuration ?? 0.1,
       panEnabled: initialConfig.panEnabled ?? true,
@@ -45,6 +47,7 @@ class StageManager {
     });
 
     this.layerManager = new LayerManager(this.stage);
+    this.selectionManager = new SelectionManager(this.layerManager.geometryLayer, this.layerManager.uiLayer, this);
 
     this.stage.scale({ x: this.config.initialScale, y: this.config.initialScale });
     this.stage.position(this.config.initialPosition);
