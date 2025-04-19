@@ -1,59 +1,60 @@
 <script lang="ts">
-  import { onMount, onDestroy, tick } from 'svelte';
-  import StageManager from '../viewport/StageManager';
-  import LineDrawer from '../viewport/LineDrawer';
-  import ModelRenderer from '../rendering/ModelRenderer';
-  import DotGrid from '../viewport/background/DotGrid';
-  import Ruler from '../viewport/Ruler';
-  let stageRef: HTMLDivElement;
-  let modelRenderer: ModelRenderer | null = null;
-  let keydownHandler: (e: KeyboardEvent) => void;
+  import PixiCanvas from './PixiCanvasTest.svelte';
+  import { createDemoSceneGraph } from '../eukleia/demo/demoScene';
+  import { EukliaRuntime } from '../eukleia/EukliaRuntime';
+  import { onDestroy, onMount } from 'svelte'; // Import onMount
 
-  onMount(async () => {
-    await tick();
-    if (stageRef) {
-      const stageManager = new StageManager(stageRef);
-      const stage = stageManager.getStage();
-      const lineDrawer = new LineDrawer(stageManager);
+  let runtime: EukliaRuntime | undefined = undefined; // Initialize as undefined
+  let containerElement: HTMLDivElement; // Renamed to avoid conflict, holds the bound element
+  let isLoading = true; // Added state for loading indicator
 
-      modelRenderer = new ModelRenderer(stageManager);
-      modelRenderer.initialize();
+  // This function will be called by the use:action directive
+  function setupContainer(node: HTMLDivElement) {
+    containerElement = node; // Assign the node
+    // Trigger the async initialization, but don't await it here
+    initializeRuntime();
 
-      // Configure snapping
-      lineDrawer.setSnapConfig({
-        enabled: true,
-        endPointSnap: true,
-        gridSnap: false,
-        gridSize: 1,
-        axisLock: false,
-        orthogonalSnap: false,
-      });
-
-      keydownHandler = (e: KeyboardEvent) => {
-        if (e.key === 'l') {
-          console.log('l');
-          lineDrawer.startNew();
-        }
-        if (e.key === 'Escape') {
-          lineDrawer.cancel();
-        }
-      };
-
-      window.addEventListener('keydown', keydownHandler);
-
-      if (!stage) {
-        return;
+    // Svelte actions can return an object with a destroy method for cleanup
+    return {
+      destroy() {
+        // Cleanup related to the action itself, if any
+        // Runtime destruction is handled separately in onDestroy
       }
+    };
+  }
 
-      new DotGrid(stageManager.layerManager.baseLayer, stage);
-      new Ruler(stageManager.layerManager.uiLayer, stage);
+  // Separate async function for initialization
+  async function initializeRuntime() {
+    if (!containerElement) return; // Guard against element not being ready
+
+    const scene = createDemoSceneGraph();
+    const rt = new EukliaRuntime(scene, containerElement);
+    try {
+        await rt.init(); // Await initialization
+        runtime = rt; // Assign only after successful init
+    } catch (error) {
+        console.error("Failed to initialize EukliaRuntime:", error);
+        // Handle initialization error appropriately (e.g., show error message)
+    } finally {
+        isLoading = false; // Update loading state regardless of success/failure
     }
+  }
+
+  // Use onDestroy for runtime cleanup when the component is destroyed
+  onDestroy(() => {
+    runtime?.destroy();
+    console.log("KonvaTest destroyed, runtime cleanup called.");
   });
 
-  onDestroy(() => {
-    window.removeEventListener('keydown', keydownHandler);
-    modelRenderer?.destroy();
-  });
 </script>
 
-<div bind:this={stageRef} class="h-full"></div>
+<!-- Use the synchronous action function -->
+<div use:setupContainer style="width: 100%; height: 100%;">
+  {#if isLoading}
+    <p>Loading Runtime...</p>
+  {:else if runtime}
+    <PixiCanvas {runtime} />
+  {:else}
+    <p>Error initializing Runtime.</p> <!-- Optional: Show error state -->
+  {/if}
+</div>

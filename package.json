@@ -31,7 +31,8 @@
     "vite": "^6.2.0"
   },
   "dependencies": {
-    "konva": "^9.3.20",
+    "pixi-viewport": "^6.0.3",
+    "pixi.js": "^8.5.2-dev.599405c",
     "svelte-radix": "^2.0.1",
     "svelte-spa-router": "^4.0.1",
     "uuid": "^11.1.0"
