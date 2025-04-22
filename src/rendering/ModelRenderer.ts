@@ -2,22 +2,23 @@ import Konva from 'konva';
 import { get, type Unsubscriber } from 'svelte/store';
 import { modelStore } from '../stores/model/store';
 import type { Model } from '../stores/model/model.types';
-import type StageManager from '../viewport/StageManager';
+import type ViewportManager from '../viewport/ViewportManager';
 import NodeRenderer from './NodeRenderer';
 import ElementRenderer from './ElementRenderer';
 
 class ModelRenderer {
-    private stageManager: StageManager;
+    private stageManager: ViewportManager;
     private targetLayer: Konva.Layer;
     private storeUnsubscriber: Unsubscriber | null = null;
     private nodeRenderer: NodeRenderer;
     private elementRenderer: ElementRenderer;
 
 
-    constructor(stageManager: StageManager) {
+    constructor(stageManager: ViewportManager) {
         this.stageManager = stageManager;
         const layer = stageManager.getLayerManager().geometryLayer;
         this.targetLayer = layer;
+        //layer.toggleHitCanvas();
         this.nodeRenderer = new NodeRenderer(this.targetLayer, this.stageManager);
         this.elementRenderer = new ElementRenderer(this.targetLayer, this.stageManager);
     }
@@ -28,10 +29,10 @@ class ModelRenderer {
         });
         const stage = this.stageManager.getStage();
         if (!stage) return;
-        stage.on('redrawAll redraw', () => {
-            this.drawModel(get(modelStore));
+        stage.on('redraw redrawAll dragend', () => {
+            this.updateView(get(modelStore));
         })
-        stage.on('dblclick', (e) => {
+        stage.on('dblclick', (e) => { //handle fitInView on double click
             console.log(stage.scaleX());
             //middle mouse button only
             if (e.evt.button === 1) {
@@ -52,7 +53,7 @@ class ModelRenderer {
             rect.height = 4000;
         }
         const maxSide = Math.max(rect.width, rect.height);
-        const margin = maxSide * 0.05; //margin of 5%
+        const margin = maxSide * 0.05; //add margin of 5% to each side
         rect.x -= margin;
         rect.y -= margin;
         rect.width += margin * 2;
@@ -60,9 +61,18 @@ class ModelRenderer {
         this.stageManager.zoomToRect(rect, duration)
     }
 
+    private updateView(model: Model): void {
+        model.elements.forEach(element => {
+            this.elementRenderer.updateElement(element);
+        });
+        model.nodes.forEach(node => {
+            this.nodeRenderer.updateNode(node);
+        });
+    }
+
     private drawModel(model: Model): void {
         this.targetLayer.destroyChildren();
-        
+
         model.elements.forEach(element => {
             this.elementRenderer.drawElement(element);
         });
@@ -79,7 +89,6 @@ class ModelRenderer {
             this.storeUnsubscriber();
             this.storeUnsubscriber = null;
         }
-        // Potentially add destroy methods to NodeRenderer/ElementRenderer if needed
     }
 }
 

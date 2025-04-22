@@ -43,7 +43,6 @@ class Ruler {
         this.stage.on('dragend', () => this.updateRulerValues());
         this.stage.on('redraw', () => this.updateRulerValues());
         this.stage.on('redrawAll', () => this.updateRulerValues());
-        this.stage.on('mousemove', () => this.updateRulerValues());
 
         // initial update
         this.updateRulerValues();

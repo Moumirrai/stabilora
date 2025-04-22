@@ -1,6 +1,6 @@
 // LineDrawer.ts
 import Konva from 'konva';
-import StageManager from './StageManager';
+import ViewportManager from './ViewportManager';
 import { SnapManager } from './SnapManager';
 import { v4 as uuidv4 } from 'uuid'; // for generating unique IDs
 import { SnapService } from './services/SnapService';
@@ -8,7 +8,7 @@ import type { SnapConfig } from './types';
 import { get } from 'svelte/store';
 
 class LineDrawer {
-  private stageManager: StageManager;
+  private stageManager: ViewportManager;
   private snapManager: SnapManager;
   private isDrawing = false;
   private startPoint: { x: number; y: number } | null = null;
@@ -18,7 +18,7 @@ class LineDrawer {
 
   private active: boolean = false;
 
-  constructor(stageManager: StageManager) {
+  constructor(stageManager: ViewportManager) {
     this.stageManager = stageManager;
     this.snapManager = SnapService.getInstance().getSnapManager();
     this.setupEventHandlers();

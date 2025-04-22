@@ -1,18 +1,33 @@
 import Konva from 'konva';
 import type { Node } from '../stores/model/model.types';
-import type StageManager from '../viewport/StageManager';
+import type ViewportManager from '../viewport/ViewportManager';
 import { selectedNodeStore } from "../stores/ui/store"
 
 class NodeRenderer {
     private targetLayer: Konva.Layer;
-    private stageManager: StageManager;
+    private stageManager: ViewportManager;
 
     private nodeRadius = 5;
     private nodeColor = '#ffffff';
 
-    constructor(targetLayer: Konva.Layer, stageManager: StageManager) {
+    constructor(targetLayer: Konva.Layer, stageManager: ViewportManager) {
         this.targetLayer = targetLayer;
         this.stageManager = stageManager;
+    }
+
+    public updateNode(node: Node): void {
+        const stage = this.stageManager.getStage();
+        if (!stage) return;
+        const scale = stage.scaleX();
+        // Find the existing node circle by ID
+        const nodeCircle = this.targetLayer.findOne(`#node-${node.id}`) as Konva.Circle;
+        if (!nodeCircle) {
+            console.warn(`Node circle for node ${node.id} not found`);
+            return;
+        }
+        // Update the radius of the node circle
+        nodeCircle.radius(this.nodeRadius / scale); // Adjust radius for zoom
+
     }
 
     public drawNode(node: Node): void {
@@ -27,6 +42,7 @@ class NodeRenderer {
             hitStrokeWidth: this.nodeRadius * 4 - 1, // this is more like radius, width is same as diameter of the circle so we get 2x diameter and substract 1 for safety
             strokeScaleEnabled: false,
             selectable: true,
+            perfectDrawEnabled: false,
         });
         circle.on('mouseover', () => {
             circle.fill('red');

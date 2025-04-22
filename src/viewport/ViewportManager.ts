@@ -14,12 +14,12 @@ export interface StageManagerConfig {
   initialScale?: number;
 }
 
-class StageManager {
+class ViewportManager {
   private stage: Konva.Stage | null = null;
   public layerManager: LayerManager;
   private resizeObserver: ResizeObserver | null = null;
   private config: Required<StageManagerConfig>;
-  private selectionManager: SelectionManager;
+  //private selectionManager: SelectionManager;
 
   // namespaces for event listeners
   private readonly eventNs = '.stageManagerEvents';
@@ -47,7 +47,7 @@ class StageManager {
     });
 
     this.layerManager = new LayerManager(this.stage);
-    this.selectionManager = new SelectionManager(this.layerManager.geometryLayer, this.layerManager.uiLayer, this);
+    //this.selectionManager = new SelectionManager(this.layerManager.geometryLayer, this.layerManager.uiLayer, this);
 
     this.stage.scale({ x: this.config.initialScale, y: this.config.initialScale });
     this.stage.position(this.config.initialPosition);
@@ -117,10 +117,13 @@ class StageManager {
       y: newPos.y,
       onUpdate: () => {
         this.emitRedraw();
+        this.stage?.fire('zoomend');
       },
       onFinish: () => {
         // Only trigger full redraw once animation is complete
         this.emitRedrawAll();
+        //this.emitZoomed();
+        this.stage?.fire('zoomed');
       }
     });
 
@@ -187,6 +190,16 @@ class StageManager {
     this.stage.fire('redrawAll');
   }
 
+  public emitZoomed() {
+    if (!this.stage) return;
+    this.stage.fire('zoomed');
+  }
+
+  public emitPanned() {
+    if (!this.stage) return;
+    this.stage.fire('panned');
+  }
+
   private setupResizeHandling(container: HTMLDivElement) {
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
@@ -234,7 +247,7 @@ class StageManager {
   }
 
   private initUILayer(): void {
-    if (!this.stage) return;
+    /* if (!this.stage) return;
     const updateUILayer = () => {
       if (!this.layerManager.uiLayer || !this.stage) return;
       const scale = 1 / this.stage.scaleX();
@@ -249,7 +262,25 @@ class StageManager {
     };
     this.stage.off(this.uiEventNs);
     this.stage.on(`dragmove${this.uiEventNs} redraw${this.uiEventNs} redrawAll${this.uiEventNs}`, updateUILayer);
-    updateUILayer();
+    updateUILayer(); */
+  }
+
+  getViewportRect(): IRect {
+    const stage = this.stage;
+    if (!stage) {
+      throw new Error("Stage is not initialized");
+    }
+    const scale = stage.scaleX(); // assume uniform scaling
+    const position = stage.position(); // stage's top-left position relative to the container
+    const width = stage.width();
+    const height = stage.height();
+  
+    return {
+      x: -position.x / scale,
+      y: -position.y / scale,
+      width: width / scale,
+      height: height / scale
+    };
   }
 
   getStage(): Konva.Stage | null {
@@ -336,13 +367,16 @@ class StageManager {
       scaleY: newScale,
       x: newPos.x,
       y: newPos.y,
-      duration: 0.1,
+      duration: this.config.zoomDuration,
       easing: Konva.Easings.EaseOut,
       onUpdate: () => {
         this.emitRedraw();
+        this.stage?.fire('zoomed');
       },
       onFinish: () => {
         this.emitRedrawAll();
+        //this.emitZoomed();
+        this.stage?.fire('zoomend');
       }
     });
 
@@ -350,4 +384,4 @@ class StageManager {
   }
 }
 
-export default StageManager;
+export default ViewportManager;

@@ -3,7 +3,7 @@ import type { Shape } from 'konva/lib/Shape';
 import type { Stage } from 'konva/lib/Stage';
 import type { Layer } from 'konva/lib/Layer';
 import type { Vector2d } from 'konva/lib/types';
-import type StageManager from './StageManager';
+import type ViewportManager from './ViewportManager';
 
 class SelectionManager {
     private stage: Stage;
@@ -23,7 +23,7 @@ class SelectionManager {
     private selectionShadowBlur = 10;
     private selectionShadowOpacity = 1;
 
-    constructor(layer: Layer, uiLyer: Layer, stageManager: StageManager) {
+    constructor(layer: Layer, uiLyer: Layer, stageManager: ViewportManager) {
         this.layer = layer;
         this.stage = stageManager.getStage()!;
         this.guiLayer = uiLyer

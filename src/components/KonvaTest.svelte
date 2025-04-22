@@ -1,18 +1,20 @@
 <script lang="ts">
   import { onMount, onDestroy, tick } from 'svelte';
-  import StageManager from '../viewport/StageManager';
+  import ViewportManager from '../viewport/ViewportManager';
   import LineDrawer from '../viewport/LineDrawer';
   import ModelRenderer from '../rendering/ModelRenderer';
   import DotGrid from '../viewport/background/DotGrid';
-  import Ruler from '../viewport/Ruler';
-  let stageRef: HTMLDivElement;
+  import HudManager from '../viewport/HudManager';
+  let viewportRef: HTMLDivElement;
+  let hudRef: HTMLDivElement;
   let modelRenderer: ModelRenderer | null = null;
   let keydownHandler: (e: KeyboardEvent) => void;
 
   onMount(async () => {
     await tick();
-    if (stageRef) {
-      const stageManager = new StageManager(stageRef);
+    if (viewportRef && hudRef) {
+      const stageManager = new ViewportManager(viewportRef);
+      const hudManager = new HudManager(hudRef, stageManager);
       const stage = stageManager.getStage();
       const lineDrawer = new LineDrawer(stageManager);
 
@@ -32,7 +34,7 @@
       keydownHandler = (e: KeyboardEvent) => {
         if (e.key === 'l') {
           console.log('l');
-          lineDrawer.startNew();
+          hudManager.destroy();
         }
         if (e.key === 'Escape') {
           lineDrawer.cancel();
@@ -44,9 +46,9 @@
       if (!stage) {
         return;
       }
-
+      //new Grid(stageManager.layerManager.baseLayer, stage);
       new DotGrid(stageManager.layerManager.baseLayer, stage);
-      new Ruler(stageManager.layerManager.uiLayer, stage);
+      //new Ruler(stageManager.layerManager.uiLayer, stage);
     }
   });
 
@@ -56,4 +58,8 @@
   });
 </script>
 
-<div bind:this={stageRef} class="h-full"></div>
+<div class="relative h-full w-full">
+  <div bind:this={viewportRef} class="absolute inset-0 h-full w-full"></div>
+  <div bind:this={hudRef} class="absolute inset-0 h-full w-full pointer-events-none">
+  </div>
+</div>
