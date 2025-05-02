@@ -19,7 +19,8 @@ class ViewportManager {
   public layerManager: LayerManager;
   private resizeObserver: ResizeObserver | null = null;
   private config: Required<StageManagerConfig>;
-  //private selectionManager: SelectionManager;
+  private zoomTween: Konva.Tween | null = null;
+  private zooming: boolean = false; // Flag to indicate if zooming is in progress
 
   // namespaces for event listeners
   private readonly eventNs = '.stageManagerEvents';
@@ -31,7 +32,7 @@ class ViewportManager {
       zoomEnabled: initialConfig.zoomEnabled ?? true,
       minZoom: initialConfig.minZoom ?? 0.002,
       maxZoom: initialConfig.maxZoom ?? 1_000,
-      zoomSpeed: initialConfig.zoomSpeed ?? 0.36,
+      zoomSpeed: initialConfig.zoomSpeed ?? 0.46,
       zoomDuration: initialConfig.zoomDuration ?? 0.1,
       panEnabled: initialConfig.panEnabled ?? true,
       initialPosition: initialConfig.initialPosition ?? { x: container.clientWidth / 2, y: container.clientHeight / 2 },
@@ -52,7 +53,6 @@ class ViewportManager {
     this.stage.scale({ x: this.config.initialScale, y: this.config.initialScale });
     this.stage.position(this.config.initialPosition);
 
-    this.initUILayer();
     this.setupResizeHandling(container);
 
     this.setupEventHandlers();
@@ -74,7 +74,7 @@ class ViewportManager {
     }
   }
 
-  public zoomToRect(box: IRect, animationDuration = 0.3) {
+  public zoomToRect(box: IRect, animationDuration: number = 0.3) {
     if (!this.stage) return;
 
     const stageWidth = this.stage.width();
@@ -109,7 +109,7 @@ class ViewportManager {
 
     const tween = new Konva.Tween({
       node: this.stage,
-      duration: 0.3,
+      duration: animationDuration,
       easing: Konva.Easings.EaseInOut,
       scaleX: newScale,
       scaleY: newScale,
@@ -246,25 +246,6 @@ class ViewportManager {
     this.emitRedrawAll();
   }
 
-  private initUILayer(): void {
-    /* if (!this.stage) return;
-    const updateUILayer = () => {
-      if (!this.layerManager.uiLayer || !this.stage) return;
-      const scale = 1 / this.stage.scaleX();
-      const stagePos = this.stage.position();
-      this.layerManager.uiLayer.scale({ x: scale, y: scale });
-      this.layerManager.uiLayer.position({
-        x: -stagePos.x * scale,
-        y: -stagePos.y * scale
-      });
-      this.layerManager.uiLayer.moveToTop();
-      this.layerManager.uiLayer.batchDraw();
-    };
-    this.stage.off(this.uiEventNs);
-    this.stage.on(`dragmove${this.uiEventNs} redraw${this.uiEventNs} redrawAll${this.uiEventNs}`, updateUILayer);
-    updateUILayer(); */
-  }
-
   getViewportRect(): IRect {
     const stage = this.stage;
     if (!stage) {
@@ -274,7 +255,7 @@ class ViewportManager {
     const position = stage.position(); // stage's top-left position relative to the container
     const width = stage.width();
     const height = stage.height();
-  
+
     return {
       x: -position.x / scale,
       y: -position.y / scale,
@@ -335,7 +316,13 @@ class ViewportManager {
   private handleZoom(e: any) {
     if (!this.stage) return;
 
-    const oldScale = this.stage.scaleX();
+    if (this.zoomTween && this.zooming) {
+      this.zoomTween.finish();
+      this.zoomTween = null;
+      this.zooming = false;
+    }
+
+    const oldScale = this.stage.scaleX()
     const pointer = this.stage.getPointerPosition();
     if (!pointer) return;
 
@@ -345,11 +332,15 @@ class ViewportManager {
     };
 
     let direction = e.evt.deltaY > 0 ? -1 : 1;
+
+    let scaleDelta = this.config.zoomSpeed
     if (e.evt.ctrlKey) {
-      direction = -direction;
+      scaleDelta *= 0.3;
     }
 
-    const scaleBy = 1 + this.config.zoomSpeed;
+    let scaleBy = 1 + scaleDelta;
+
+
     const newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
 
     if (newScale < this.config.minZoom || newScale > this.config.maxZoom) {
@@ -361,7 +352,7 @@ class ViewportManager {
       y: pointer.y - mousePointTo.y * newScale,
     };
 
-    const tween = new Konva.Tween({
+    this.zoomTween = new Konva.Tween({
       node: this.stage,
       scaleX: newScale,
       scaleY: newScale,
@@ -377,10 +368,13 @@ class ViewportManager {
         this.emitRedrawAll();
         //this.emitZoomed();
         this.stage?.fire('zoomend');
+        this.zooming = false;
       }
     });
 
-    tween.play();
+    this.zooming = true;
+
+    this.zoomTween.play();
   }
 }
 

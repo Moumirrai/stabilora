@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store';
+import { writable, get } from 'svelte/store';
 import type { Model, Node, Element } from './model.types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -35,13 +35,28 @@ const initialModel: Model = initDebugModel();
 // create the writable store
 const { subscribe, set, update } = writable<Model>(initialModel);
 
-const addNode = (x: number, y: number, name: number): Node => {
-    const newNode: Node = { id: uuidv4(), name, dx: x, dy: y };
+const addNode = (x: number, y: number, name?: number): Node => {
+    const nodeName = name === undefined ? generateNextNodeName() : name;
+    const newNode: Node = { id: uuidv4(), name: nodeName, dx: x, dy: y };
     update(model => ({
         ...model,
         nodes: [...model.nodes, newNode]
     }));
     return newNode;
+};
+
+const generateNextNodeName = (): number => {
+    const currentModel = get({ subscribe }); // Use get to read current state
+    if (currentModel.nodes.length === 0) {
+        return 1;
+    }
+    const maxName = Math.max(...currentModel.nodes.map(n => n.name));
+    return maxName + 1;
+};
+
+const isNodeNameUsed = (name: number): boolean => {
+    const currentModel = get({ subscribe }); // Use get to read current state
+    return currentModel.nodes.some(n => n.name === name);
 };
 
 const deleteNode = (id: string) => {

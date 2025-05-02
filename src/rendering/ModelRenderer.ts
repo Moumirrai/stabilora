@@ -33,10 +33,9 @@ class ModelRenderer {
             this.updateView(get(modelStore));
         })
         stage.on('dblclick', (e) => { //handle fitInView on double click
-            console.log(stage.scaleX());
             //middle mouse button only
             if (e.evt.button === 1) {
-                this.fitInView(300);
+                this.fitInView(0.25);
             }
         });
         this.fitInView(0);
