@@ -9,11 +9,13 @@ export class AddNodeCommand implements ICommand {
     private y: number;
     private name?: number;
     private createdNode?: Node;
+    public id: string;
 
     constructor(x: number, y: number, name?: number) {
         this.x = x;
         this.y = y;
         this.name = name;
+        this.id = uuidv4();
     }
 
     do(): void {
@@ -27,7 +29,7 @@ export class AddNodeCommand implements ICommand {
         }
         const assignedName = this.name === undefined ? generateNextNodeName() : this.name;
         const newNode: Node = {
-            id: uuidv4(),
+            id: this.id,
             name: assignedName,
             dx: this.x,
             dy: this.y

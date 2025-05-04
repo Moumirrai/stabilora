@@ -1,3 +1,4 @@
+import { AddElementCommand } from './commands/AddElementCommand';
 import { AddNodeCommand } from './commands/AddNodeCommand';
 import type { ICommand } from './ICommand';
 
@@ -14,10 +15,16 @@ export class Transaction {
         this.commands.push(command);
     }
 
-    addNode(...args: ConstructorParameters<typeof AddNodeCommand>): Transaction {
+    addNode(...args: ConstructorParameters<typeof AddNodeCommand>): String {
         const command = new AddNodeCommand(...args);
         this.addCommand(command);
-        return this;
+        return command.id;
+    }
+
+    addElement(...args: ConstructorParameters<typeof AddElementCommand>): String {
+        const command = new AddElementCommand(...args);
+        this.addCommand(command);
+        return command.id;
     }
 
     do() {
