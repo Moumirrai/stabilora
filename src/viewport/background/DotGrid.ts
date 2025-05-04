@@ -17,7 +17,7 @@ class DotGrid {
     });
     layer.add(this.gridGroup);
     stage.on('dragend', () => this.drawGrid(stage));
-    stage.on('redrawAll', () => this.drawGrid(stage));
+    stage.on('redrawAll redraw', () => this.drawGrid(stage));
     this.drawGrid(stage);
   }
 

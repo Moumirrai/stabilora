@@ -77,6 +77,7 @@
     </p>
     <!-- Display actual node data coordinates if needed -->
     <p>Node Pos: ({Math.round(node.dx)}, {Math.round(node.dy)})</p>
+    <p>Node Name: ({node.name})</p>
   </div>
 {/if}
 

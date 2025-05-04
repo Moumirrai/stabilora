@@ -122,7 +122,7 @@ class ViewportManager {
       onFinish: () => {
         // Only trigger full redraw once animation is complete
         this.emitRedrawAll();
-        //this.emitZoomed();
+        this.emitZoomed();
         this.stage?.fire('zoomed');
       }
     });
@@ -362,11 +362,11 @@ class ViewportManager {
       easing: Konva.Easings.EaseOut,
       onUpdate: () => {
         this.emitRedraw();
-        this.stage?.fire('zoomed');
+        this.emitZoomed();
       },
       onFinish: () => {
         this.emitRedrawAll();
-        //this.emitZoomed();
+        this.emitZoomed();
         this.stage?.fire('zoomend');
         this.zooming = false;
       }

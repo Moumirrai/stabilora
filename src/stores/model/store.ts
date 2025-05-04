@@ -1,4 +1,4 @@
-import { writable, get } from 'svelte/store';
+import { writable } from 'svelte/store';
 import type { Model, Node, Element } from './model.types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -33,9 +33,13 @@ const initDebugModel = (): Model => {
 const initialModel: Model = initDebugModel();
 
 // create the writable store
-const { subscribe, set, update } = writable<Model>(initialModel);
+export const internalStore = writable<Model>(initialModel);
 
-const addNode = (x: number, y: number, name?: number): Node => {
+export const modelStore = {
+    subscribe: internalStore.subscribe,
+}
+
+/* const addNode = (x: number, y: number, name?: number): Node => {
     const nodeName = name === undefined ? generateNextNodeName() : name;
     const newNode: Node = { id: uuidv4(), name: nodeName, dx: x, dy: y };
     update(model => ({
@@ -92,10 +96,10 @@ const deleteElement = (id: string) => {
 
 const resetModel = () => {
     set({ nodes: [], elements: [] });
-};
+}; */
 
 
-export const modelStore = {
+/* export const modelStore = {
     subscribe,
     set, // allow replacing the whole state
     reset: resetModel,
@@ -103,4 +107,4 @@ export const modelStore = {
     deleteNode,
     addElement,
     deleteElement,
-};
+}; */
