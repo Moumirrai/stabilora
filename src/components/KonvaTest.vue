@@ -56,7 +56,7 @@ onMounted(() => {
     }
 
     stageManager.setupEventHandlers();
-    stageManager.setGrid(GridType.DOT)
+    stageManager.setGrid(GridType.DOT);
     pointerPositionRef = stageManager.pointerPositionRef;
   }
 });

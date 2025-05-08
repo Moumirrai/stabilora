@@ -6,7 +6,6 @@ const stageRef = ref<HTMLDivElement | null>(null);
 //let pointerPositionRef = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 
 onMounted(() => {
-
   if (stageRef.value) {
     const stageManager = new StageManager(stageRef.value);
     const stage = stageManager.getStage();
@@ -32,7 +31,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-
 .viewport {
   width: 100vw;
   height: 100vh;

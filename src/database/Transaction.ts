@@ -1,39 +1,41 @@
-import { AddElementCommand } from './commands/AddElementCommand';
-import { AddNodeCommand } from './commands/AddNodeCommand';
-import type { ICommand } from './ICommand';
+import { AddElementOperation } from './operations/AddElementOperation';
+import { AddNodeOperation } from './operations/AddNodeOperation';
+import type { IOperation } from './IOperation';
 
 export class Transaction {
-    private commands: ICommand[] = []; // ordered list of commands
-    public readonly name: string; // name of the transaction to be displayed in the UI
-    public timestamp?: number;
+  private commands: IOperation[] = []; // ordered list of operations
+  public readonly name: string; // name of the transaction to be displayed in the UI
+  public timestamp?: number;
 
-    constructor(name: string) {
-        this.name = name;
-    }
+  constructor(name: string) {
+    this.name = name;
+  }
 
-    addCommand(command: ICommand) {
-        this.commands.push(command);
-    }
+  addCommand(command: IOperation) {
+    this.commands.push(command);
+  }
 
-    addNode(...args: ConstructorParameters<typeof AddNodeCommand>): String {
-        const command = new AddNodeCommand(...args);
-        this.addCommand(command);
-        return command.id;
-    }
+  addNode(...args: ConstructorParameters<typeof AddNodeOperation>): String {
+    const command = new AddNodeOperation(...args);
+    this.addCommand(command);
+    return command.id;
+  }
 
-    addElement(...args: ConstructorParameters<typeof AddElementCommand>): String {
-        const command = new AddElementCommand(...args);
-        this.addCommand(command);
-        return command.id;
-    }
+  addElement(
+    ...args: ConstructorParameters<typeof AddElementOperation>
+  ): String {
+    const command = new AddElementOperation(...args);
+    this.addCommand(command);
+    return command.id;
+  }
 
-    do() {
-        this.timestamp = Date.now();
-        this.commands.forEach((command) => command.do());
-    }
+  do() {
+    this.timestamp = Date.now();
+    this.commands.forEach((command) => command.do());
+  }
 
-    undo() {
-        this.timestamp = Date.now();
-        this.commands.reverse().forEach((command) => command.undo());
-    }
+  undo() {
+    this.timestamp = Date.now();
+    this.commands.reverse().forEach((command) => command.undo());
+  }
 }
