@@ -25,8 +25,10 @@ class ViewportManager {
   private readonly eventNs = '.stageManagerEvents';
   private readonly uiEventNs = '.uiLayerUpdate';
 
-  constructor(container: HTMLDivElement, initialConfig: StageManagerConfig = {}) {
-
+  constructor(
+    container: HTMLDivElement,
+    initialConfig: StageManagerConfig = {}
+  ) {
     this.config = {
       zoomEnabled: initialConfig.zoomEnabled ?? true,
       minZoom: initialConfig.minZoom ?? 0.002,
@@ -34,10 +36,12 @@ class ViewportManager {
       zoomSpeed: initialConfig.zoomSpeed ?? 0.46,
       zoomDuration: initialConfig.zoomDuration ?? 0.1,
       panEnabled: initialConfig.panEnabled ?? true,
-      initialPosition: initialConfig.initialPosition ?? { x: container.clientWidth / 2, y: container.clientHeight / 2 },
+      initialPosition: initialConfig.initialPosition ?? {
+        x: container.clientWidth / 2,
+        y: container.clientHeight / 2,
+      },
       initialScale: initialConfig.initialScale ?? 1,
     };
-
 
     this.stage = new Konva.Stage({
       container: container,
@@ -49,7 +53,10 @@ class ViewportManager {
     this.layerManager = new LayerManager(this.stage);
     //this.selectionManager = new SelectionManager(this.layerManager.geometryLayer, this.layerManager.uiLayer, this);
 
-    this.stage.scale({ x: this.config.initialScale, y: this.config.initialScale });
+    this.stage.scale({
+      x: this.config.initialScale,
+      y: this.config.initialScale,
+    });
     this.stage.position(this.config.initialPosition);
 
     this.setupResizeHandling(container);
@@ -84,7 +91,7 @@ class ViewportManager {
     const newScale = Math.min(scaleX, scaleY);
 
     if (newScale < this.config.minZoom || newScale > this.config.maxZoom) {
-      console.warn("Target scale is out of bounds");
+      console.warn('Target scale is out of bounds');
       return;
     }
 
@@ -123,7 +130,7 @@ class ViewportManager {
         this.emitRedrawAll();
         this.emitZoomed();
         this.stage?.fire('zoomed');
-      }
+      },
     });
 
     tween.play();
@@ -238,7 +245,7 @@ class ViewportManager {
     const newPositionY = newHeight / 2 - centerY * oldScale;
     this.stage.position({
       x: newPositionX,
-      y: newPositionY
+      y: newPositionY,
     });
 
     // Redraw everything
@@ -248,7 +255,7 @@ class ViewportManager {
   getViewportRect(): IRect {
     const stage = this.stage;
     if (!stage) {
-      throw new Error("Stage is not initialized");
+      throw new Error('Stage is not initialized');
     }
     const scale = stage.scaleX(); // assume uniform scaling
     const position = stage.position(); // stage's top-left position relative to the container
@@ -259,7 +266,7 @@ class ViewportManager {
       x: -position.x / scale,
       y: -position.y / scale,
       width: width / scale,
-      height: height / scale
+      height: height / scale,
     };
   }
 
@@ -321,7 +328,7 @@ class ViewportManager {
       this.zooming = false;
     }
 
-    const oldScale = this.stage.scaleX()
+    const oldScale = this.stage.scaleX();
     const pointer = this.stage.getPointerPosition();
     if (!pointer) return;
 
@@ -332,13 +339,12 @@ class ViewportManager {
 
     let direction = e.evt.deltaY > 0 ? -1 : 1;
 
-    let scaleDelta = this.config.zoomSpeed
+    let scaleDelta = this.config.zoomSpeed;
     if (e.evt.ctrlKey) {
       scaleDelta *= 0.3;
     }
 
     let scaleBy = 1 + scaleDelta;
-
 
     const newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
 
@@ -368,7 +374,7 @@ class ViewportManager {
         this.emitZoomed();
         this.stage?.fire('zoomend');
         this.zooming = false;
-      }
+      },
     });
 
     this.zooming = true;

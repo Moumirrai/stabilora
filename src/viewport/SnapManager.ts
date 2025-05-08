@@ -43,7 +43,8 @@ export class SnapManager {
       const endPoint = this.findNearestEndPoint(point, excludeLineId);
       if (
         endPoint &&
-        this.getDistance(point, endPoint) < this.config.endPointSnapDistance / scale
+        this.getDistance(point, endPoint) <
+          this.config.endPointSnapDistance / scale
       ) {
         snappedPoint = endPoint;
         minDistance = this.getDistance(point, endPoint);
@@ -65,7 +66,8 @@ export class SnapManager {
       const centerPoint = this.findNearestCenterPoint(point, excludeLineId);
       if (
         centerPoint &&
-        this.getDistance(point, centerPoint) < this.config.centerSnapDistance / scale
+        this.getDistance(point, centerPoint) <
+          this.config.centerSnapDistance / scale
       ) {
         const distance = this.getDistance(point, centerPoint);
         if (distance < minDistance) {

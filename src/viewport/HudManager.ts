@@ -4,125 +4,130 @@ import { Ruler } from './hud/Ruler';
 import { FpsCounter } from './hud/FpsCounter';
 
 class HudManager {
-    private readonly hudStage: Konva.Stage;
-    private readonly hudLayer: Konva.Layer;
-    private readonly fpsLayer: Konva.Layer;
-    private readonly viewportManager: ViewportManager;
-    private readonly hudContainer: HTMLDivElement;
-    private mainStage: Konva.Stage | null;
-    private resizeObserver: ResizeObserver | null = null;
+  private readonly hudStage: Konva.Stage;
+  private readonly hudLayer: Konva.Layer;
+  private readonly fpsLayer: Konva.Layer;
+  private readonly viewportManager: ViewportManager;
+  private readonly hudContainer: HTMLDivElement;
+  private mainStage: Konva.Stage | null;
+  private resizeObserver: ResizeObserver | null = null;
 
-    private ruler: Ruler | null = null;
-    private fpsCounter: FpsCounter | null = null;
+  private ruler: Ruler | null = null;
+  private fpsCounter: FpsCounter | null = null;
 
-    private readonly mainStageEventNs = '.hudManagerUpdate';
+  private readonly mainStageEventNs = '.hudManagerUpdate';
 
-    constructor(hudContainerElement: HTMLDivElement, viewportManagerInstance: ViewportManager) {
-        this.hudContainer = hudContainerElement;
-        this.viewportManager = viewportManagerInstance;
-        this.mainStage = this.viewportManager.getStage();
+  constructor(
+    hudContainerElement: HTMLDivElement,
+    viewportManagerInstance: ViewportManager
+  ) {
+    this.hudContainer = hudContainerElement;
+    this.viewportManager = viewportManagerInstance;
+    this.mainStage = this.viewportManager.getStage();
 
-        if (!this.mainStage) {
-            throw new Error("HudManager requires a ViewportManager with an initialized stage.");
-        }
-
-        const initialWidth = this.hudContainer.clientWidth;
-        const initialHeight = this.hudContainer.clientHeight;
-
-        this.hudStage = new Konva.Stage({
-            container: this.hudContainer,
-            width: initialWidth,
-            height: initialHeight,
-            listening: false,
-        });
-
-        // layer for less frequently updated elements like rulers
-        this.hudLayer = new Konva.Layer({
-            perfectDrawEnabled: false,
-            listening: false,
-        });
-        this.hudStage.add(this.hudLayer);
-
-        // dedicated layer for frequently updated FPS counter
-        this.fpsLayer = new Konva.Layer({
-            perfectDrawEnabled: false,
-            listening: false,
-        });
-        this.hudStage.add(this.fpsLayer);
-
-        this.ruler = new Ruler(this.viewportManager, this.hudLayer, this.hudStage);
-        this.fpsCounter = new FpsCounter(this.fpsLayer, this.hudStage);
-
-        this.setupResizeHandling(this.hudContainer);
-        this.setupMainStageListeners();
+    if (!this.mainStage) {
+      throw new Error(
+        'HudManager requires a ViewportManager with an initialized stage.'
+      );
     }
 
-    private setupResizeHandling(container: HTMLDivElement): void {
-        this.resizeObserver = new ResizeObserver(() => {
-            this.handleResize(container);
-        });
-        this.resizeObserver.observe(container);
-    }
+    const initialWidth = this.hudContainer.clientWidth;
+    const initialHeight = this.hudContainer.clientHeight;
 
-    private setupMainStageListeners(): void {
-        if (!this.mainStage) return;
+    this.hudStage = new Konva.Stage({
+      container: this.hudContainer,
+      width: initialWidth,
+      height: initialHeight,
+      listening: false,
+    });
 
-        const redrawEvents = `dragend${this.mainStageEventNs} redrawAll${this.mainStageEventNs} zoomend${this.mainStageEventNs}`;
-        this.mainStage.on(redrawEvents, () => {
-            this.ruler?.update();
-        });
+    // layer for less frequently updated elements like rulers
+    this.hudLayer = new Konva.Layer({
+      perfectDrawEnabled: false,
+      listening: false,
+    });
+    this.hudStage.add(this.hudLayer);
 
-        const updateEvents = `dragmove${this.mainStageEventNs} zoomed${this.mainStageEventNs}`;
-        //const updateEvents = `zoomed${this.mainStageEventNs}`;
-        this.mainStage.on(updateEvents, () => {
-            this.ruler?.update();
-        });
+    // dedicated layer for frequently updated FPS counter
+    this.fpsLayer = new Konva.Layer({
+      perfectDrawEnabled: false,
+      listening: false,
+    });
+    this.hudStage.add(this.fpsLayer);
 
-        const testEvents = `dragstart${this.mainStageEventNs}`;
-        this.mainStage.on(testEvents, () => {
-            //this.ruler?.update();
-            console.log('test');
-        });
-    }
+    this.ruler = new Ruler(this.viewportManager, this.hudLayer, this.hudStage);
+    this.fpsCounter = new FpsCounter(this.fpsLayer, this.hudStage);
 
-    private handleResize(container: HTMLDivElement): void {
-        const newWidth = container.clientWidth;
-        const newHeight = container.clientHeight;
-        this.hudStage.width(newWidth);
-        this.hudStage.height(newHeight);
+    this.setupResizeHandling(this.hudContainer);
+    this.setupMainStageListeners();
+  }
 
-        this.ruler?.resize(newWidth, newHeight);
-        this.fpsCounter?.resize(newWidth, newHeight);
+  private setupResizeHandling(container: HTMLDivElement): void {
+    this.resizeObserver = new ResizeObserver(() => {
+      this.handleResize(container);
+    });
+    this.resizeObserver.observe(container);
+  }
 
-        this.hudLayer.batchDraw();
-    }
+  private setupMainStageListeners(): void {
+    if (!this.mainStage) return;
 
-    public getHudStage(): Konva.Stage {
-        return this.hudStage;
-    }
+    const redrawEvents = `dragend${this.mainStageEventNs} redrawAll${this.mainStageEventNs} zoomend${this.mainStageEventNs}`;
+    this.mainStage.on(redrawEvents, () => {
+      this.ruler?.update();
+    });
 
-    public getHudLayer(): Konva.Layer {
-        return this.hudLayer;
-    }
+    const updateEvents = `dragmove${this.mainStageEventNs} zoomed${this.mainStageEventNs}`;
+    //const updateEvents = `zoomed${this.mainStageEventNs}`;
+    this.mainStage.on(updateEvents, () => {
+      this.ruler?.update();
+    });
 
-    public getFpsLayer(): Konva.Layer {
-        return this.fpsLayer;
-    }
+    const testEvents = `dragstart${this.mainStageEventNs}`;
+    this.mainStage.on(testEvents, () => {
+      //this.ruler?.update();
+      console.log('test');
+    });
+  }
 
-    public destroy(): void {
-        this.resizeObserver?.disconnect();
+  private handleResize(container: HTMLDivElement): void {
+    const newWidth = container.clientWidth;
+    const newHeight = container.clientHeight;
+    this.hudStage.width(newWidth);
+    this.hudStage.height(newHeight);
 
-        this.mainStage?.off(this.mainStageEventNs);
+    this.ruler?.resize(newWidth, newHeight);
+    this.fpsCounter?.resize(newWidth, newHeight);
 
-        this.ruler?.destroy();
-        this.fpsCounter?.destroy();
-        this.hudStage.destroy();
+    this.hudLayer.batchDraw();
+  }
 
-        this.mainStage = null;
-        this.resizeObserver = null;
-        this.ruler = null;
-        this.fpsCounter = null;
-    }
+  public getHudStage(): Konva.Stage {
+    return this.hudStage;
+  }
+
+  public getHudLayer(): Konva.Layer {
+    return this.hudLayer;
+  }
+
+  public getFpsLayer(): Konva.Layer {
+    return this.fpsLayer;
+  }
+
+  public destroy(): void {
+    this.resizeObserver?.disconnect();
+
+    this.mainStage?.off(this.mainStageEventNs);
+
+    this.ruler?.destroy();
+    this.fpsCounter?.destroy();
+    this.hudStage.destroy();
+
+    this.mainStage = null;
+    this.resizeObserver = null;
+    this.ruler = null;
+    this.fpsCounter = null;
+  }
 }
 
 export default HudManager;

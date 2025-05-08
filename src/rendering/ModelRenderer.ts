@@ -66,7 +66,7 @@ class ModelRenderer {
     model.elements.forEach((element) => {
       this.elementRenderer.updateElement(element);
     });
-    this.nodeRenderer.updateAllNodes()
+    this.nodeRenderer.updateAllNodes();
     this.targetLayer.batchDraw();
     /*model.nodes.forEach((node) => {
       this.nodeRenderer.updateNode(node);

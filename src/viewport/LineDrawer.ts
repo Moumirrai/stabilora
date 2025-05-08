@@ -115,7 +115,7 @@ class LineDrawer {
       },
       length: Math.sqrt(
         Math.pow(snappedEndPos.x - this.startPoint.x, 2) +
-        Math.pow(snappedEndPos.y - this.startPoint.y, 2)
+          Math.pow(snappedEndPos.y - this.startPoint.y, 2)
       ),
       angle: Math.atan2(
         snappedEndPos.y - this.startPoint.y,

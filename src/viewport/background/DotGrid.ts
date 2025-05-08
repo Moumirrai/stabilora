@@ -96,7 +96,7 @@ class DotGrid {
         // Draw main grid dots
         for (let x = startX; x <= endX; x += size) {
           for (let y = startY; y <= endY; y += size) {
-            const isOrigin = Math.abs(x) == 0 && Math.abs(y) == 0
+            const isOrigin = Math.abs(x) == 0 && Math.abs(y) == 0;
 
             if (isOrigin) {
               // Origin point
@@ -127,7 +127,9 @@ class DotGrid {
           // Only create subdivision dots when we won't be rendering too many
           const totalWidth = endX - startX;
           const totalHeight = endY - startY;
-          const estimatedDots = (totalWidth / (size / subDivisions)) * (totalHeight / (size / subDivisions));
+          const estimatedDots =
+            (totalWidth / (size / subDivisions)) *
+            (totalHeight / (size / subDivisions));
 
           if (estimatedDots < 10000) {
             for (let x = startX; x <= endX; x += size / subDivisions) {

@@ -230,7 +230,7 @@ class ElementRenderer {
     const elementGroup = new Konva.Group({
       id: `element-${element.id}`,
       visible: isInitiallyVisible,
-      listening: false //TODO: remove after fixing hit shape
+      listening: false, //TODO: remove after fixing hit shape
     });
 
     // solid line clipping

@@ -1,24 +1,23 @@
-
 export interface Model {
-    elements: Element[];
-    nodes: Node[];
-    //loadCases: LoadCase[];
+  elements: Element[];
+  nodes: Node[];
+  //loadCases: LoadCase[];
 }
 
 export interface Element {
-    id: string;
-    nodeA: Node; // Direct reference
-    nodeB: Node; // Direct reference
-    //loads: Record<string, ElementLoad>; // loadCaseId -> loads
+  id: string;
+  nodeA: Node; // Direct reference
+  nodeB: Node; // Direct reference
+  //loads: Record<string, ElementLoad>; // loadCaseId -> loads
 }
 
 export interface Node {
-    id: string;
-    name: number;
-    dx: number;
-    dy: number;
-    //constraint: NodeConstraint;
-    //loads: Record<string, NodeLoad>; // loadCaseId -> loads
+  id: string;
+  name: number;
+  dx: number;
+  dy: number;
+  //constraint: NodeConstraint;
+  //loads: Record<string, NodeLoad>; // loadCaseId -> loads
 }
 
 /* // Strongly typed loads
