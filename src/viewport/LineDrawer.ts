@@ -5,7 +5,6 @@ import { SnapManager } from './SnapManager';
 import { v4 as uuidv4 } from 'uuid'; // for generating unique IDs
 import { SnapService } from './services/SnapService';
 import type { SnapConfig } from './types';
-import { get } from 'svelte/store';
 
 class LineDrawer {
   private stageManager: ViewportManager;

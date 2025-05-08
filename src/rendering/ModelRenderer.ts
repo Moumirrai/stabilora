@@ -7,8 +7,8 @@ import NodeRenderer from './NodeRenderer';
 import ElementRenderer from './ElementRenderer';
 
 class ModelRenderer {
-  private stageManager: ViewportManager;
-  private targetLayer: Konva.Layer;
+  private readonly stageManager: ViewportManager;
+  private readonly targetLayer: Konva.Layer;
   private storeUnsubscriber: Unsubscriber | null = null;
   private nodeRenderer: NodeRenderer;
   private elementRenderer: ElementRenderer;

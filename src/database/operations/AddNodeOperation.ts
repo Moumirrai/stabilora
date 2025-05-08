@@ -5,9 +5,9 @@ import type { Node } from '../../stores/model/model.types';
 import { v4 as uuidv4 } from 'uuid';
 
 export class AddNodeOperation implements IOperation {
-  private x: number;
-  private y: number;
-  private name?: number;
+  private readonly x: number;
+  private readonly y: number;
+  private readonly name?: number;
   private createdNode?: Node;
   public id: string;
 

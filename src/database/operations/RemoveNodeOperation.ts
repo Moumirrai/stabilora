@@ -1,6 +1,6 @@
 import type { IOperation } from '../IOperation';
 import { internalStore } from '../../stores/model/store';
-import type { Node, Element } from '../../stores/model/model.types';
+import type { Node } from '../../stores/model/model.types';
 import { v4 as uuidv4 } from 'uuid';
 import { get } from 'svelte/store';
 

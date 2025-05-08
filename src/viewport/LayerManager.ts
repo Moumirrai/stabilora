@@ -6,14 +6,13 @@ class LayerManager {
   public temporaryLayer: Konva.Layer;
 
   constructor(private stage: Konva.Stage) {
-    this.baseLayer = this.createLayer('base', 1, false, false);
-    this.geometryLayer = this.createLayer('gemoetry', 2, false, true);
-    this.temporaryLayer = this.createLayer('temp', 3, false, false);
+    this.baseLayer = this.createLayer('base', false, false);
+    this.geometryLayer = this.createLayer('gemoetry', false, true);
+    this.temporaryLayer = this.createLayer('temp', false, false);
   }
 
   private createLayer(
     name: string,
-    zIndex: number,
     hidden: boolean,
     listening: boolean
   ): Konva.Layer {

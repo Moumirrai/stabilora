@@ -1,7 +1,7 @@
 import Konva from 'konva';
 
 class DotGrid {
-  private gridGroup: Konva.Group;
+  private readonly gridGroup: Konva.Group;
   private stage: Konva.Stage;
   private readonly baseSize = 100;
   private readonly mainDotSize = 2; // Fixed pixel size

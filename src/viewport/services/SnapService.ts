@@ -3,7 +3,7 @@ import { SnapManager } from '../SnapManager';
 
 export class SnapService {
   private static instance: SnapService;
-  private snapManager: SnapManager;
+  private readonly snapManager: SnapManager;
 
   private constructor() {
     this.snapManager = new SnapManager({

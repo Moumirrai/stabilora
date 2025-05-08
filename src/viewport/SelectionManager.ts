@@ -1,12 +1,11 @@
 import Konva from 'konva';
-import type { Shape } from 'konva/lib/Shape';
 import type { Stage } from 'konva/lib/Stage';
 import type { Layer } from 'konva/lib/Layer';
 import type { Vector2d } from 'konva/lib/types';
 import type ViewportManager from './ViewportManager';
 
 class SelectionManager {
-    private stage: Stage;
+    private readonly stage: Stage;
     private layer: Layer;
     private guiLayer: Layer;
 
@@ -17,16 +16,16 @@ class SelectionManager {
     private isSelecting = false;
     private dragThreshold = 5; // minimum pixels to move before starting selection box
 
-    private filter: (item: Konva.Node) => boolean = (item) => item.attrs.selectable === true;
+    private filter: (item: Konva.Node) => boolean = (item) => item.attrs.selectable;
 
     private selectionShadowColor = 'red';
     private selectionShadowBlur = 10;
     private selectionShadowOpacity = 1;
 
-    constructor(layer: Layer, uiLyer: Layer, stageManager: ViewportManager) {
+    constructor(layer: Layer, uiLayer: Layer, stageManager: ViewportManager) {
         this.layer = layer;
         this.stage = stageManager.getStage()!;
-        this.guiLayer = uiLyer
+        this.guiLayer = uiLayer
 
         this.stage.on('mousedown.selection', this.handleMouseDown);
         this.stage.on('mousemove.selection', this.handleMouseMove);

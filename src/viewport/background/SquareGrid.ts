@@ -1,7 +1,7 @@
 import Konva from 'konva';
 
 class Grid {
-  private gridGroup: Konva.Group;
+  private readonly gridGroup: Konva.Group;
   private readonly baseSize = 100;
   //private readonly zoomThresholds = [0.1, 0.2, 0.5, 1, 2, 4, 8];
 

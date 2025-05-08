@@ -4,13 +4,13 @@ import { Ruler } from './hud/Ruler';
 import { FpsCounter } from './hud/FpsCounter';
 
 class HudManager {
-    private hudStage: Konva.Stage;
-    private hudLayer: Konva.Layer;
-    private fpsLayer: Konva.Layer;
-    private viewportManager: ViewportManager;
+    private readonly hudStage: Konva.Stage;
+    private readonly hudLayer: Konva.Layer;
+    private readonly fpsLayer: Konva.Layer;
+    private readonly viewportManager: ViewportManager;
+    private readonly hudContainer: HTMLDivElement;
     private mainStage: Konva.Stage | null;
     private resizeObserver: ResizeObserver | null = null;
-    private hudContainer: HTMLDivElement;
 
     private ruler: Ruler | null = null;
     private fpsCounter: FpsCounter | null = null;
