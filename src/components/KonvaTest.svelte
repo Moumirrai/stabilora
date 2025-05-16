@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy, tick } from 'svelte';
+  import { previewStore } from '../stores/model/store';
   import ViewportManager from '../viewport/ViewportManager';
   import LineDrawer from '../viewport/LineDrawer';
   import ModelRenderer from '../rendering/ModelRenderer';
@@ -8,6 +9,7 @@
   let viewportRef: HTMLDivElement;
   let hudRef: HTMLDivElement;
   let modelRenderer: ModelRenderer | null = null;
+  let previewRenderer: ModelRenderer | null = null;
   let keydownHandler: (e: KeyboardEvent) => void;
 
   onMount(async () => {
@@ -20,6 +22,9 @@
 
       modelRenderer = new ModelRenderer(stageManager);
       modelRenderer.initialize();
+      stageManager.fitInView(0)
+      previewRenderer = new ModelRenderer(stageManager, previewStore, stageManager.getLayerManager().temporaryLayer);
+      previewRenderer.initialize();
 
       // Configure snapping
       lineDrawer.setSnapConfig({
@@ -60,6 +65,8 @@
 
 <div class="relative h-full w-full">
   <div bind:this={viewportRef} class="absolute inset-0 h-full w-full"></div>
-  <div bind:this={hudRef} class="absolute inset-0 h-full w-full pointer-events-none">
-  </div>
+  <div
+    bind:this={hudRef}
+    class="absolute inset-0 h-full w-full pointer-events-none"
+  ></div>
 </div>

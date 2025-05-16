@@ -11,7 +11,7 @@ export class RemoveElementOperation implements IOperation {
     this.elementIdToRemove = elementIdToRemove;
   }
 
-  do(): void {
+  do(): boolean {
     const modelState = get(internalStore);
     const elementToRemove = modelState.elements?.find(
       (el) => el.id === this.elementIdToRemove
@@ -21,7 +21,7 @@ export class RemoveElementOperation implements IOperation {
       console.warn(
         `RemoveElementOperation: Element with ID "${this.elementIdToRemove}" not found. Nothing to remove.`
       );
-      return;
+      return false;
     }
 
     this.removedElement = elementToRemove; // Store the element before removing
@@ -35,9 +35,10 @@ export class RemoveElementOperation implements IOperation {
         elements: remainingElements,
       };
     });
+    return true;
   }
 
-  undo(): void {
+  undo(): boolean {
     if (this.removedElement) {
       internalStore.update((model) => {
         // Ensure no duplicate if element somehow got re-added by another means
@@ -49,10 +50,12 @@ export class RemoveElementOperation implements IOperation {
           elements: [...(model.elements || []), this.removedElement!],
         };
       });
+      return true;
     } else {
       console.warn(
         `RemoveElementOperation: No element was removed previously for ID "${this.elementIdToRemove}". Nothing to undo.`
       );
+      return false;
     }
   }
 }

@@ -16,14 +16,14 @@ export class AddElementOperation implements IOperation {
     this.id = uuidv4();
   }
 
-  do(): void {
+  do(): boolean {
     if (this.createdElement) {
       // If redoing, the element already exists with correct node references
       internalStore.update((model) => ({
         ...model,
         elements: [...(model.elements || []), this.createdElement!],
       }));
-      return; // exit early as we just re-added the existing element
+      return true; // exit early as we just re-added the existing element
     }
 
     const modelState = get(internalStore);
@@ -38,7 +38,7 @@ export class AddElementOperation implements IOperation {
           nodeBId: this.nodeBId,
         }
       );
-      return;
+      return false;
     }
 
     const newElement: Element = {
@@ -57,9 +57,10 @@ export class AddElementOperation implements IOperation {
 
     // store the newly created element object
     this.createdElement = newElement;
+    return true;
   }
 
-  undo(): void {
+  undo(): boolean {
     if (this.createdElement) {
       const elementIdToRemove = this.createdElement.id;
       internalStore.update((model) => {
@@ -71,6 +72,11 @@ export class AddElementOperation implements IOperation {
           elements: remainingElements,
         };
       });
+      return true;
     }
+    console.warn(
+      `AddElementOperation: No element was created previously for ID "${this.id}". Nothing to undo.`
+    );
+    return false;
   }
 }

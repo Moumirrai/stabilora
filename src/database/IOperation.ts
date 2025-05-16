@@ -1,4 +1,4 @@
 export interface IOperation {
-  do(): void;
-  undo(): void;
+  do(): boolean; // returns true if the operation was successful
+  undo(): boolean;
 }

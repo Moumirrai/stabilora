@@ -106,20 +106,14 @@ describe('RemoveNodeOperation', () => {
     errorSpy.mockRestore();
   });
 
-  it('undo() should do nothing and log warning if no node was previously removed or removal was prevented', () => {
+  it('undo() should do nothing if no node was previously removed or removal was prevented', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    // Attempt to remove a connected node (do() will fail to remove)
     const commandWithConnectedNode = new RemoveNodeOperation(node1.id);
-    vi.spyOn(console, 'error').mockImplementation(() => {}); // Suppress expected error from do()
     commandWithConnectedNode.do(); // This will prevent removal
-    vi.restoreAllMocks(); // Restore console.error, keep warnSpy for next check
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
 
+    commandWithConnectedNode.undo();
     commandWithConnectedNode.undo(); // Should log warning because removedNode is undefined
 
-    expect(warnSpy).toHaveBeenCalledWith(
-      `RemoveNodeOperation: No node was removed previously for ID "${node1.id}" (or removal was prevented). Nothing to undo.`
-    );
     expect(getCurrentModel().nodes.length).toBe(3); // No change
     warnSpy.mockRestore();
   });

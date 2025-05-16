@@ -9,6 +9,11 @@ export interface Element {
   nodeA: Node; // Direct reference
   nodeB: Node; // Direct reference
   //loads: Record<string, ElementLoad>; // loadCaseId -> loads
+  style?: {
+    color: string;
+    width: number;
+    opacity: number;
+  };
 }
 
 export interface Node {
@@ -18,6 +23,11 @@ export interface Node {
   dy: number;
   //constraint: NodeConstraint;
   //loads: Record<string, NodeLoad>; // loadCaseId -> loads
+  style?: {
+    color: string;
+    radius: number;
+    opacity: number;
+  };
 }
 
 /* // Strongly typed loads

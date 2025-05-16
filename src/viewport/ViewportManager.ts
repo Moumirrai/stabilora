@@ -136,6 +136,28 @@ class ViewportManager {
     tween.play();
   }
 
+  public fitInView(duration: number): void {
+    const stage = this.getStage();
+    if (!stage) return;
+    const rect = this.getLayerManager().geometryLayer.getClientRect({
+      relativeTo: stage,
+    });
+    if (rect.width === 0 && rect.height === 0) {
+      //TODO: rework this
+      rect.x = -2000;
+      rect.y = -2000;
+      rect.width = 4000;
+      rect.height = 4000;
+    }
+    const maxSide = Math.max(rect.width, rect.height);
+    const margin = maxSide * 0.05; //add margin of 5% to each side
+    rect.x -= margin;
+    rect.y -= margin;
+    rect.width += margin * 2;
+    rect.height += margin * 2;
+    this.zoomToRect(rect, duration);
+  }
+
   public setPanEnabled(enabled: boolean): void {
     if (this.config.panEnabled === enabled) return;
     this.config.panEnabled = enabled;
@@ -305,6 +327,14 @@ class ViewportManager {
           this.stage?.draggable(false);
         }
       });
+      this.stage.on('dblclick', (e) => {
+        //handle fitInView on double click
+        //middle mouse button only
+        if (e.evt.button === 1) {
+          this.fitInView(0.25);
+        }
+      });
+      this.fitInView(0);
     } else {
       // Ensure draggable is false if pan is disabled
       this.stage.draggable(false);

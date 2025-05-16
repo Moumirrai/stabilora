@@ -18,14 +18,14 @@ export class AddNodeOperation implements IOperation {
     this.id = uuidv4();
   }
 
-  do(): void {
+  do(): boolean {
     if (this.createdNode) {
       const nodeToAdd = this.createdNode;
       internalStore.update((model) => ({
         ...model,
         nodes: [...(model.nodes || []), nodeToAdd],
       }));
-      return; // exit early as we just re-added the existing node
+      return true;
     }
     const assignedName =
       this.name === undefined ? generateNextNodeName() : this.name;
@@ -45,9 +45,10 @@ export class AddNodeOperation implements IOperation {
     });
 
     this.createdNode = newNode;
+    return true;
   }
 
-  undo(): void {
+  undo(): boolean {
     if (this.createdNode) {
       const nodeIdToRemove = this.createdNode.id;
       internalStore.update((model) => {
@@ -64,6 +65,12 @@ export class AddNodeOperation implements IOperation {
           elements: remainingElements,
         };
       });
+      return true;
+    } else {
+      console.warn(
+        `AddNodeOperation: No node was created previously for ID "${this.id}". Nothing to undo.`
+      );
+      return false;
     }
   }
 }

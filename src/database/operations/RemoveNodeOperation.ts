@@ -14,7 +14,7 @@ export class RemoveNodeOperation implements IOperation {
     this.id = uuidv4();
   }
 
-  do(): void {
+  do(): boolean {
     const modelState = get(internalStore);
     const nodeToRemove = modelState.nodes?.find(
       (n) => n.id === this.nodeIdToRemove
@@ -24,7 +24,7 @@ export class RemoveNodeOperation implements IOperation {
       console.warn(
         `RemoveNodeOperation: Node with ID "${this.nodeIdToRemove}" not found. Nothing to remove.`
       );
-      return;
+      return false;
     }
 
     // check for connected elements
@@ -39,7 +39,7 @@ export class RemoveNodeOperation implements IOperation {
         `RemoveNodeOperation: Node "${nodeToRemove.name}" (ID: ${this.nodeIdToRemove}) cannot be removed because it has connected elements.`
       );
       // TODO: throw error
-      return;
+      return false;
     }
 
     this.removedNode = nodeToRemove; // store the node before removing
@@ -53,9 +53,10 @@ export class RemoveNodeOperation implements IOperation {
         nodes: remainingNodes,
       };
     });
+    return true;
   }
 
-  undo(): void {
+  undo(): boolean {
     if (this.removedNode) {
       internalStore.update((model) => {
         // Ensure no duplicate if node somehow got re-added by another means
@@ -67,10 +68,12 @@ export class RemoveNodeOperation implements IOperation {
           nodes: [...(model.nodes || []), this.removedNode!],
         };
       });
+      return true;
     } else {
       console.warn(
         `RemoveNodeOperation: No node was removed previously for ID "${this.nodeIdToRemove}" (or removal was prevented). Nothing to undo.`
       );
+      return false;
     }
   }
 }
