@@ -1,8 +1,8 @@
 import Konva from 'konva';
-import ViewportManager from '../ViewportManager';
+import Viewport from '../viewport';
 
 export class Ruler {
-  private viewportManager: ViewportManager;
+  private viewportManager: Viewport;
   private mainStage: Konva.Stage;
   private hudLayer: Konva.Layer;
   private hudStage: Konva.Stage; // needed for dimensions
@@ -30,7 +30,7 @@ export class Ruler {
   private readonly dragRenderMarginFactor = 2.0;
 
   constructor(
-    viewportManager: ViewportManager,
+    viewportManager: Viewport,
     hudLayer: Konva.Layer,
     hudStage: Konva.Stage
   ) {

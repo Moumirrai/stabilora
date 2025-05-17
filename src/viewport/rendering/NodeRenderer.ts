@@ -1,17 +1,17 @@
 import Konva from 'konva';
-import type { Node } from '../stores/model/model.types';
-import type ViewportManager from '../viewport/ViewportManager';
-import { selectedNodeStore } from '../stores/ui/store';
+import type { Node } from '../../stores/model/model.types';
+import type Viewport from '../viewport';
+import { selectedNodeStore } from '../../stores/ui/store';
 
 class NodeRenderer {
   private targetLayer: Konva.Layer;
-  private stageManager: ViewportManager;
+  private stageManager: Viewport;
   private nodeShapes: Map<string | number, Konva.Circle> = new Map(); // Cache for node shapes
 
   private nodeRadius = 5;
   private nodeColor = '#ffffff';
 
-  constructor(targetLayer: Konva.Layer, stageManager: ViewportManager) {
+  constructor(targetLayer: Konva.Layer, stageManager: Viewport) {
     this.targetLayer = targetLayer;
     this.stageManager = stageManager;
   }

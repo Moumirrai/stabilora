@@ -1,13 +1,13 @@
 import Konva from 'konva';
-import ViewportManager from '../viewport/ViewportManager';
+import Viewport from './viewport';
 import { Ruler } from './hud/Ruler';
 import { FpsCounter } from './hud/FpsCounter';
 
-class HudManager {
+class Hud {
   private readonly hudStage: Konva.Stage;
   private readonly hudLayer: Konva.Layer;
   private readonly fpsLayer: Konva.Layer;
-  private readonly viewportManager: ViewportManager;
+  private readonly viewportManager: Viewport;
   private readonly hudContainer: HTMLDivElement;
   private mainStage: Konva.Stage | null;
   private resizeObserver: ResizeObserver | null = null;
@@ -19,16 +19,14 @@ class HudManager {
 
   constructor(
     hudContainerElement: HTMLDivElement,
-    viewportManagerInstance: ViewportManager
+    viewportManagerInstance: Viewport
   ) {
     this.hudContainer = hudContainerElement;
     this.viewportManager = viewportManagerInstance;
     this.mainStage = this.viewportManager.getStage();
 
     if (!this.mainStage) {
-      throw new Error(
-        'HudManager requires a ViewportManager with an initialized stage.'
-      );
+      throw new Error('Hud requires a Viewport with an initialized stage.');
     }
 
     const initialWidth = this.hudContainer.clientWidth;
@@ -130,4 +128,4 @@ class HudManager {
   }
 }
 
-export default HudManager;
+export default Hud;

@@ -1,6 +1,6 @@
 import Konva from 'konva';
-import type { Element } from '../stores/model/model.types';
-import type ViewportManager from 'src/viewport/ViewportManager';
+import type { Element } from '../../stores/model/model.types';
+import type Viewport from '../viewport';
 
 // Liang-Barsky line clipping algorithm
 function clipLineSegment(
@@ -59,7 +59,7 @@ function clipLineSegment(
 
 class ElementRenderer {
   private targetLayer: Konva.Layer;
-  private stageManager: ViewportManager;
+  private stageManager: Viewport;
 
   private elementColor = '#fff';
   private bottomFiberColor = '#fff';
@@ -70,7 +70,7 @@ class ElementRenderer {
     return [10 / scale, 10 / scale]; // dash pattern for the dashed line
   }
 
-  constructor(targetLayer: Konva.Layer, stageManager: ViewportManager) {
+  constructor(targetLayer: Konva.Layer, stageManager: Viewport) {
     this.targetLayer = targetLayer;
     this.stageManager = stageManager;
   }

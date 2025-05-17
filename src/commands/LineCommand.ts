@@ -1,10 +1,10 @@
 import { db } from 'src/database/DatabaseManager';
-import type ViewportManager from 'src/viewport/ViewportManager';
+import type Viewport from '../viewport/viewport';
 
 export class LineCommand {
-  private viewportManager: ViewportManager;
+  private viewportManager: Viewport;
 
-  constructor(viewportManager: ViewportManager) {
+  constructor(viewportManager: Viewport) {
     this.viewportManager = viewportManager;
   }
 }

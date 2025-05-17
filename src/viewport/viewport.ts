@@ -13,8 +13,8 @@ export interface StageManagerConfig {
   initialScale?: number;
 }
 
-class ViewportManager {
-  private stage: Konva.Stage | null = null;
+class Viewport {
+  private stage: Konva.Stage;
   public layerManager: LayerManager;
   private resizeObserver: ResizeObserver | null = null;
   private config: Required<StageManagerConfig>;
@@ -51,7 +51,7 @@ class ViewportManager {
     });
 
     this.layerManager = new LayerManager(this.stage);
-    //this.selectionManager = new SelectionManager(this.layerManager.geometryLayer, this.layerManager.uiLayer, this);
+    //this.selectionManager = new Selection(this.layerManager.geometryLayer, this.layerManager.uiLayer, this);
 
     this.stage.scale({
       x: this.config.initialScale,
@@ -76,7 +76,6 @@ class ViewportManager {
       this.stage.off(this.eventNs);
       this.stage.off(this.uiEventNs);
       this.stage.destroy();
-      this.stage = null;
     }
   }
 
@@ -411,6 +410,19 @@ class ViewportManager {
 
     this.zoomTween.play();
   }
+
+  private createLayer(
+    name: string,
+    hidden: boolean,
+    listening: boolean
+  ): Konva.Layer {
+    const layer = new Konva.Layer();
+    layer.name(name);
+    layer.visible(!hidden);
+    layer.listening(listening);
+    this.stage.add(layer);
+    return layer;
+  }
 }
 
-export default ViewportManager;
+export default Viewport;

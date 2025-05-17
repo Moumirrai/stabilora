@@ -8,7 +8,7 @@ class LayerManager {
   constructor(private stage: Konva.Stage) {
     this.baseLayer = this.createLayer('base', false, false);
     this.geometryLayer = this.createLayer('gemoetry', false, true);
-    this.temporaryLayer = this.createLayer('temp', false, false);
+    this.temporaryLayer = this.createLayer('temprr', false, false);
   }
 
   private createLayer(

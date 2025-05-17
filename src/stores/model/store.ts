@@ -40,4 +40,7 @@ export const modelStore = {
 };
 
 // create preview store
-export const previewStore = writable<Model>();
+export const previewStore = writable<Model>({
+  nodes: [],
+  elements: [],
+});

@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount, onDestroy, tick } from 'svelte';
   import { previewStore } from '../stores/model/store';
-  import ViewportManager from '../viewport/ViewportManager';
-  import LineDrawer from '../viewport/LineDrawer';
-  import ModelRenderer from '../rendering/ModelRenderer';
-  import DotGrid from '../viewport/background/DotGrid';
-  import HudManager from '../viewport/HudManager';
+  import Viewport from '../viewport/viewport';
+  import ModelRenderer from '../viewport/rendering/ModelRenderer';
+  import DotGrid from '../viewport/grid/DotGrid';
+  import Grid from "../viewport/grid/SquareGrid"
+  import Hud from '../viewport/hud';
   let viewportRef: HTMLDivElement;
   let hudRef: HTMLDivElement;
   let modelRenderer: ModelRenderer | null = null;
@@ -15,10 +15,9 @@
   onMount(async () => {
     await tick();
     if (viewportRef && hudRef) {
-      const stageManager = new ViewportManager(viewportRef);
-      const hudManager = new HudManager(hudRef, stageManager);
+      const stageManager = new Viewport(viewportRef);
+      const hudManager = new Hud(hudRef, stageManager);
       const stage = stageManager.getStage();
-      const lineDrawer = new LineDrawer(stageManager);
 
       modelRenderer = new ModelRenderer(stageManager);
       modelRenderer.initialize();
@@ -26,39 +25,15 @@
       previewRenderer = new ModelRenderer(stageManager, previewStore, stageManager.getLayerManager().temporaryLayer);
       previewRenderer.initialize();
 
-      // Configure snapping
-      lineDrawer.setSnapConfig({
-        enabled: true,
-        endPointSnap: true,
-        gridSnap: false,
-        gridSize: 1,
-        axisLock: false,
-        orthogonalSnap: false,
-      });
-
-      keydownHandler = (e: KeyboardEvent) => {
-        if (e.key === 'l') {
-          console.log('l');
-          hudManager.destroy();
-        }
-        if (e.key === 'Escape') {
-          lineDrawer.cancel();
-        }
-      };
-
-      window.addEventListener('keydown', keydownHandler);
-
       if (!stage) {
         return;
       }
       //new Grid(stageManager.layerManager.baseLayer, stage);
       new DotGrid(stageManager.layerManager.baseLayer, stage);
-      //new Ruler(stageManager.layerManager.uiLayer, stage);
     }
   });
 
   onDestroy(() => {
-    window.removeEventListener('keydown', keydownHandler);
     modelRenderer?.destroy();
   });
 </script>
