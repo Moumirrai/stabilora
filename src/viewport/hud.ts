@@ -2,6 +2,7 @@ import Konva from 'konva';
 import Viewport from './viewport';
 import { Ruler } from './hud/Ruler';
 import { FpsCounter } from './hud/FpsCounter';
+import { CoordSystemIndicator } from './hud/CoordSystemIndicator';
 
 class Hud {
   private readonly hudStage: Konva.Stage;
@@ -55,6 +56,7 @@ class Hud {
 
     this.ruler = new Ruler(this.viewportManager, this.hudLayer, this.hudStage);
     this.fpsCounter = new FpsCounter(this.fpsLayer, this.hudStage);
+    this.hudLayer.add(CoordSystemIndicator);
 
     this.setupResizeHandling(this.hudContainer);
     this.setupMainStageListeners();

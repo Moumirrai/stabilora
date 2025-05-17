@@ -10,10 +10,10 @@
 
   function addRandomNode() {
     const transaction = new Transaction('addRandomNode');
-	const nodeA = transaction.addNode(randomNumber(), randomNumber());
-	const nodeB = transaction.addNode(randomNumber(), randomNumber());
-	//get those two nodes
-	const node1 = transaction.addElement(nodeA, nodeB);
+    const nodeA = transaction.addNode(randomNumber(), randomNumber());
+    const nodeB = transaction.addNode(randomNumber(), randomNumber());
+    //get those two nodes
+    const node1 = transaction.addElement(nodeA, nodeB);
     //transaction.addNode(randomNumber(), randomNumber());
     db.commit(transaction);
   }

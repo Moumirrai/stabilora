@@ -6,7 +6,6 @@
   import NodeInfoCard from '../components/NodeInfoCard.svelte';
 </script>
 
-
 <div class="h-screen grid grid-rows-[auto_1fr]">
   <div class="md:block border-b">
     <Menu />

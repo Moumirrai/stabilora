@@ -4,7 +4,7 @@
   import Viewport from '../viewport/viewport';
   import ModelRenderer from '../viewport/rendering/ModelRenderer';
   import DotGrid from '../viewport/grid/DotGrid';
-  import Grid from "../viewport/grid/SquareGrid"
+  import Grid from '../viewport/grid/SquareGrid';
   import Hud from '../viewport/hud';
   let viewportRef: HTMLDivElement;
   let hudRef: HTMLDivElement;
@@ -21,8 +21,12 @@
 
       modelRenderer = new ModelRenderer(stageManager);
       modelRenderer.initialize();
-      stageManager.fitInView(0)
-      previewRenderer = new ModelRenderer(stageManager, previewStore, stageManager.getLayerManager().temporaryLayer);
+      stageManager.fitInView(0);
+      previewRenderer = new ModelRenderer(
+        stageManager,
+        previewStore,
+        stageManager.getLayerManager().temporaryLayer
+      );
       previewRenderer.initialize();
 
       if (!stage) {

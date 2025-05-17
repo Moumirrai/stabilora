@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "format": "prettier --write \"src/**/*.{vue,ts}\"",
+    "format": "prettier --write \"src/**/*.{vue,ts,svelte}\"",
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
     "test": "vitest"
   },
@@ -20,7 +20,7 @@
     "@types/node": "^22.15.14",
     "@vitest/ui": "^3.1.3",
     "autoprefixer": "^10.4.21",
-    "bits-ui": "^0.22.0",
+    "bits-ui": "0.22.0",
     "clsx": "^2.1.1",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
@@ -34,7 +34,10 @@
     "vitest": "^3.1.3"
   },
   "dependencies": {
+    "@lucide/svelte": "^0.511.0",
     "konva": "^9.3.20",
+    "prettier-plugin-svelte": "^3.4.0",
+    "radix-svelte": "^0.9.0",
     "svelte-radix": "^2.0.1",
     "svelte-spa-router": "^4.0.1",
     "uuid": "^11.1.0"
