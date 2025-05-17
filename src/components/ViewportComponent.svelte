@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy, tick } from 'svelte';
   import { previewStore } from '../stores/model/store';
+  import { viewportStore } from '../stores/app/store';
   import Viewport from '../viewport/viewport';
   import ModelRenderer from '../viewport/rendering/ModelRenderer';
   import DotGrid from '../viewport/grid/DotGrid';
@@ -15,17 +16,18 @@
   onMount(async () => {
     await tick();
     if (viewportRef && hudRef) {
-      const stageManager = new Viewport(viewportRef);
-      const hudManager = new Hud(hudRef, stageManager);
-      const stage = stageManager.getStage();
+      const viewport = new Viewport(viewportRef);
+      viewportStore.set(viewport);
+      const hudManager = new Hud(hudRef, viewport);
+      const stage = viewport.getStage();
 
-      modelRenderer = new ModelRenderer(stageManager);
+      modelRenderer = new ModelRenderer(viewport);
       modelRenderer.initialize();
-      stageManager.fitInView(0);
+      viewport.fitInView(0);
       previewRenderer = new ModelRenderer(
-        stageManager,
+        viewport,
         previewStore,
-        stageManager.getLayerManager().temporaryLayer
+        viewport.getLayerManager().temporaryLayer
       );
       previewRenderer.initialize();
 
@@ -33,11 +35,12 @@
         return;
       }
       //new Grid(stageManager.layerManager.baseLayer, stage);
-      new DotGrid(stageManager.layerManager.baseLayer, stage);
+      new DotGrid(viewport.layerManager.baseLayer, stage);
     }
   });
 
   onDestroy(() => {
+    viewportStore.set(null);
     modelRenderer?.destroy();
   });
 </script>

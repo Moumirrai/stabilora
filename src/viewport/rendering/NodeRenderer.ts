@@ -1,7 +1,7 @@
 import Konva from 'konva';
 import type { Node } from '../../stores/model/model.types';
 import type Viewport from '../viewport';
-import { selectedNodeStore } from '../../stores/ui/store';
+import { selectedNodeStore } from '../../stores/app/store';
 
 class NodeRenderer {
   private targetLayer: Konva.Layer;

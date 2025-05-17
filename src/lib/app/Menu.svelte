@@ -5,6 +5,9 @@
   import { Undo, Redo } from '@lucide/svelte';
   import { db } from '../../database/DatabaseManager';
   import * as Tooltip from '$lib/components/ui/tooltip';
+  import { viewportStore } from '../../stores/app/store';
+  import { get } from 'svelte/store';
+  import { Github } from '@lucide/svelte';
 
   const { canRedo, canUndo } = db;
 </script>
@@ -30,7 +33,11 @@
   </Menubar.Menu>
   <Menubar.Menu>
     <Menubar.Trigger class="relative">View</Menubar.Trigger>
-    <Menubar.Content></Menubar.Content>
+    <Menubar.Content>
+      <Menubar.Item on:click={() => get(viewportStore)?.fitInView(0.3)}>
+        Fit in view
+      </Menubar.Item>
+    </Menubar.Content>
   </Menubar.Menu>
   <Menubar.Menu>
     <Menubar.Trigger>Export</Menubar.Trigger>
@@ -38,7 +45,17 @@
   </Menubar.Menu>
   <Menubar.Menu>
     <Menubar.Trigger>Help</Menubar.Trigger>
-    <Menubar.Content></Menubar.Content>
+    <Menubar.Content>
+      <Menubar.Item
+        on:click={() =>
+          window
+            .open('https://github.com/Moumirrai/stabilora/issues/new', '_blank')
+            ?.focus()}
+        >New Github Issue<Menubar.Shortcut
+          ><Github size="16" /></Menubar.Shortcut
+        ></Menubar.Item
+      >
+    </Menubar.Content>
   </Menubar.Menu>
   <Separator orientation="vertical" class="h-[20px]" />
   <Tooltip.Root openDelay={0} group>

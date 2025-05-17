@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { selectedNodeStore } from '../stores/ui/store';
+  import { selectedNodeStore } from '../stores/app/store';
   import { onDestroy } from 'svelte';
 
   let cardElement: HTMLDivElement; // Reference to the card's div element

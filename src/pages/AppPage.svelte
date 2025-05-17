@@ -1,5 +1,5 @@
 <script lang="ts">
-  import KonvaTest from '../components/KonvaTest.svelte';
+  import KonvaTest from '../components/ViewportComponent.svelte';
   import { Button } from '$lib/components/ui/button';
   import Menu from '$lib/app/Menu.svelte';
   import Sidebar from '$lib/app/Sidebar.svelte';
