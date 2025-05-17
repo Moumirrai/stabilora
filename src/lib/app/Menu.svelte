@@ -5,6 +5,8 @@
   import { Undo, Redo } from '@lucide/svelte';
   import { db } from '../../database/DatabaseManager';
   import * as Tooltip from '$lib/components/ui/tooltip';
+
+  const { canRedo, canUndo } = db;
 </script>
 
 <Menubar.Root class="rounded-none border-b border-none px-2">
@@ -39,21 +41,11 @@
     <Menubar.Content></Menubar.Content>
   </Menubar.Menu>
   <Separator orientation="vertical" class="h-[20px]" />
-  <!-- <Tooltip.Root openDelay={0} group>
-				<Tooltip.Trigger
-					id="archive_tooltip"
-					class={buttonVariants({ variant: "ghost", size: "icon" })}
-					disabled={!mail}
-				>
-					<Icons.Archive class="size-4" />
-					<span class="sr-only">Archive</span>
-				</Tooltip.Trigger>
-				<Tooltip.Content>Archive</Tooltip.Content>
-			</Tooltip.Root> -->
   <Tooltip.Root openDelay={0} group>
     <Tooltip.Trigger id="undo_tooltip" asChild let:builder>
       <Button
         builders={[builder]}
+        disabled={!$canUndo}
         on:click={() => {
           db.undo();
         }}
@@ -67,6 +59,7 @@
     <Tooltip.Trigger id="redo_tooltip" asChild let:builder>
       <Button
         builders={[builder]}
+        disabled={!$canRedo}
         on:click={() => {
           db.redo();
         }}

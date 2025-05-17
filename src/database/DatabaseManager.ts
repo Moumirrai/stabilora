@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store';
+import { derived, writable, type Readable } from 'svelte/store';
 import { internalStore } from '../stores/model/store';
 import type { Transaction } from './Transaction';
 
@@ -11,8 +11,26 @@ class Database {
     subscribe: internalStore.subscribe,
   };
 
-  private undoStack: Transaction[] = [];
-  private redoStack: Transaction[] = [];
+  private _undoStackStore = writable<Transaction[]>([]);
+  private _redoStackStore = writable<Transaction[]>([]);
+
+  // Read-only stores for external use
+  public readonly undoStack: Readable<Transaction[]> = {
+    subscribe: this._undoStackStore.subscribe,
+  };
+
+  public readonly redoStack: Readable<Transaction[]> = {
+    subscribe: this._redoStackStore.subscribe,
+  };
+
+  public readonly canUndo = derived(
+    this.undoStack,
+    ($stack) => $stack.length > 0
+  );
+  public readonly canRedo = derived(
+    this.redoStack,
+    ($stack) => $stack.length > 0
+  );
 
   private constructor() {}
 
@@ -26,26 +44,52 @@ class Database {
 
   public commit(transaction: Transaction) {
     transaction.do();
-    this.undoStack.push(transaction);
-    if (this.undoStack.length > this.historyLimit) {
-      this.undoStack.shift(); // removes first (oldest) element
-    }
-    this.redoStack = []; // clear redo stack on new commit
+    this._undoStackStore.update((stack) => {
+      const newStack = [...stack, transaction];
+      // Apply history limit
+      if (newStack.length > this.historyLimit) {
+        return newStack.slice(1); // Remove oldest item
+      }
+      return newStack;
+    });
+    this._redoStackStore.set([]); // clear redo stack on new commit
   }
 
   public undo() {
-    if (this.undoStack.length > 0) {
-      const transaction = this.undoStack.pop()!;
+    let transaction: Transaction | undefined;
+
+    // Remove last transaction from undo stack
+    this._undoStackStore.update((stack) => {
+      if (stack.length === 0) return stack;
+
+      const newStack = [...stack];
+      transaction = newStack.pop();
+      return newStack;
+    });
+
+    // If we got a transaction, undo it and add to redo stack
+    if (transaction) {
       transaction.undo();
-      this.redoStack.push(transaction);
+      this._redoStackStore.update((stack) => [...stack, transaction!]);
     }
   }
 
   public redo() {
-    if (this.redoStack.length > 0) {
-      const transaction = this.redoStack.pop()!;
+    let transaction: Transaction | undefined;
+
+    // Remove last transaction from redo stack
+    this._redoStackStore.update((stack) => {
+      if (stack.length === 0) return stack;
+
+      const newStack = [...stack];
+      transaction = newStack.pop();
+      return newStack;
+    });
+
+    // If we got a transaction, do it and add to undo stack
+    if (transaction) {
       transaction.do();
-      this.undoStack.push(transaction);
+      this._undoStackStore.update((stack) => [...stack, transaction!]);
     }
   }
 }
