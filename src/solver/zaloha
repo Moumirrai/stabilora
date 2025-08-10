@@ -1,0 +1,15 @@
+import { expect, test } from 'vitest';
+import { soucet, deleni } from './debug';
+
+test('soucet', () => {
+  expect(soucet(1, 2)).toBe(3);
+  expect(soucet(-1, 1)).toBe(0);
+  expect(soucet(0, 0)).toBe(0);
+  expect(soucet(100, 200)).toBe(300);
+});
+test('deleni', () => {
+  expect(deleni(6, 2)).toBe(3);
+  expect(deleni(5, 0)).toBe(0); // Division by zero
+  expect(deleni(-6, 2)).toBe(-3);
+  expect(deleni(0, 1)).toBe(0);
+});
