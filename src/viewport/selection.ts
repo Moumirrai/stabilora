@@ -23,6 +23,9 @@ class Selection {
   private selectionShadowBlur = 10;
   private selectionShadowOpacity = 1;
 
+  private fadeOutTween: Konva.Tween | null = null;
+  private fadeOutDuration = 100; // ms
+
   constructor(layer: Layer, uiLayer: Layer, stageManager: Viewport) {
     this.layer = layer;
     this.stage = stageManager.getStage()!;
@@ -33,7 +36,7 @@ class Selection {
     this.stage.on('mouseup.selection', this.handleMouseUp);
 
     this.stage.on('redraw redrawAll', () => {
-      console.log('Redrawing selection...');
+      //console.log('Redrawing selection...');
       for (const id of this.selection) {
         const node = this.layer.findOne(`#${id}`);
         if (!node) continue;
@@ -48,6 +51,7 @@ class Selection {
     this.stage.off('mousemove.selection');
     this.stage.off('mouseup.selection');
     this.clearSelection();
+    this.finishFadeOutAnimation();
     this.selectionBox?.destroy();
     this.selectionBox = null;
   }
@@ -77,6 +81,13 @@ class Selection {
     //node.shadowEnabled(false);
   }
 
+  private finishFadeOutAnimation() {
+    if (this.fadeOutTween) {
+      this.fadeOutTween.finish();
+      this.fadeOutTween = null;
+    }
+  }
+
   public clearSelection() {
     this.selection.forEach((id) => {
       const node = this.layer.findOne(`#${id}`);
@@ -95,7 +106,8 @@ class Selection {
     }
 
     this.isSelecting = true;
-    this.selectionBoxStartPos = this.stage.getPointerPosition();
+    // Use relative pointer position for screen coordinates
+    this.selectionBoxStartPos = this.stage.getRelativePointerPosition();
 
     if (!e.evt.shiftKey) {
       this.clearSelection();
@@ -107,7 +119,8 @@ class Selection {
       return;
     }
 
-    const currentPos = this.stage.getPointerPosition();
+    // Use relative pointer position for screen coordinates
+    const currentPos = this.stage.getRelativePointerPosition();
     if (!currentPos) return;
 
     const dx = Math.abs(currentPos.x - this.selectionBoxStartPos.x);
@@ -116,11 +129,12 @@ class Selection {
     if (dx > this.dragThreshold || dy > this.dragThreshold) {
       if (!this.selectionBox) {
         this.selectionBox = new Konva.Rect({
-          fill: 'rgba(0, 161, 255, 0.3)',
-          stroke: 'rgba(0, 161, 255, 0.8)',
+          fill: '#ffcc0018',
+          stroke: '#ffcc00',
           strokeWidth: 1,
           visible: true,
           listening: false,
+          strokeScaleEnabled: false,
         });
         this.guiLayer.add(this.selectionBox);
       }
@@ -146,11 +160,20 @@ class Selection {
     if (this.selectionBox) {
       const boxRect = this.selectionBox.getClientRect();
 
+      // Convert screen coordinates to world coordinates for intersection testing
+      const transform = this.stage.getAbsoluteTransform().copy().invert();
+      const worldBoxRect = {
+        x: (boxRect.x - this.stage.x()) / this.stage.scaleX(),
+        y: (boxRect.y - this.stage.y()) / this.stage.scaleY(),
+        width: boxRect.width / this.stage.scaleX(),
+        height: boxRect.height / this.stage.scaleY(),
+      };
+
       const shapesInBox = this.layer.find((node: Konva.Node) => {
         if (!this.filter(node)) {
           return false;
         }
-        return Konva.Util.haveIntersection(boxRect, node.getClientRect());
+        return Konva.Util.haveIntersection(worldBoxRect, node.getClientRect());
       });
 
       const shapeIdsInBox = new Set(shapesInBox.map((s) => s.id()));
@@ -196,9 +219,10 @@ class Selection {
 
       console.log('Selected item IDs:', this.selection);
 
-      this.selectionBox.destroy();
+      /* this.selectionBox.destroy();
       this.selectionBox = null;
-      this.guiLayer.batchDraw();
+      this.guiLayer.batchDraw(); */
+      this.startFadeOutAnimation();
     }
 
     this.selectionBoxStartPos = null;
@@ -207,6 +231,26 @@ class Selection {
       this.layer.batchDraw();
     }
   };
+
+  private startFadeOutAnimation() {
+    if (!this.selectionBox) return;
+
+    this.fadeOutTween = new Konva.Tween({
+      node: this.selectionBox,
+      duration: this.fadeOutDuration / 1000, // Konva uses seconds
+      opacity: 0,
+      onFinish: () => {
+        if (this.selectionBox) {
+          this.selectionBox.destroy();
+          this.selectionBox = null;
+        }
+        this.fadeOutTween = null;
+        this.guiLayer.batchDraw();
+      },
+    });
+
+    this.fadeOutTween.play();
+  }
 }
 
 export default Selection;

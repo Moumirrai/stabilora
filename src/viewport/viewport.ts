@@ -1,6 +1,7 @@
 import Konva from 'konva';
 import LayerManager from './LayerManager';
 import type { IRect } from 'konva/lib/types';
+import Selection from './selection';
 
 export interface StageManagerConfig {
   zoomEnabled?: boolean;
@@ -51,7 +52,11 @@ class Viewport {
     });
 
     this.layerManager = new LayerManager(this.stage);
-    //this.selectionManager = new Selection(this.layerManager.geometryLayer, this.layerManager.uiLayer, this);
+    new Selection(
+      this.layerManager.geometryLayer,
+      this.layerManager.baseLayer,
+      this
+    );
 
     this.stage.scale({
       x: this.config.initialScale,

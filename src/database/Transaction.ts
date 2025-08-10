@@ -17,7 +17,7 @@ export class Transaction {
     this.commands.push(command);
   }
 
-  addNode(...args: ConstructorParameters<typeof AddNodeOperation>): String {
+  addNode(...args: ConstructorParameters<typeof AddNodeOperation>): string {
     const command = new AddNodeOperation(...args);
     this.addCommand(command);
     return command.id;
