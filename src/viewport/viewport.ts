@@ -54,7 +54,7 @@ class Viewport {
     this.layerManager = new LayerManager(this.stage);
     new Selection(
       this.layerManager.geometryLayer,
-      this.layerManager.baseLayer,
+      this.layerManager.temporaryLayer,
       this
     );
 

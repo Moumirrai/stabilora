@@ -72,8 +72,11 @@ class NodeRenderer {
     const stage = this.stageManager.getStage();
     if (!stage) return;
     const scale = stage.scaleX();
+
+    const radius = this.nodeRadius / scale;
+    
     this.nodeShapes.forEach((nodeCircle) => {
-      nodeCircle.radius(this.nodeRadius / scale);
+      nodeCircle.radius(radius);
     });
   }
 }
