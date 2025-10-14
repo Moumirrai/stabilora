@@ -144,8 +144,19 @@ class Selection {
       const width = Math.abs(currentPos.x - this.selectionBoxStartPos.x);
       const height = Math.abs(currentPos.y - this.selectionBoxStartPos.y);
 
-      this.selectionBox.setAttrs({ x, y, width, height });
+      const intersectSelect = this.selectionBoxStartPos.x < currentPos.x
+
+      let dash: Array<number> | undefined = undefined;
+      if (!intersectSelect) {
+        dash = [5, 5];
+      }
+
+      //console.log(`Selection box: x=${x}, y=${y}, width=${width}, height=${height}`);
+
+      this.selectionBox.setAttrs({ x, y, width, height, dash });
       this.guiLayer.batchDraw();
+
+      const rect = [x, y, currentPos.x, currentPos.y];
     }
   };
 
