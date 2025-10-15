@@ -144,7 +144,7 @@ class Selection {
       const width = Math.abs(currentPos.x - this.selectionBoxStartPos.x);
       const height = Math.abs(currentPos.y - this.selectionBoxStartPos.y);
 
-      const intersectSelect = this.selectionBoxStartPos.x < currentPos.x
+      const intersectSelect = this.selectionBoxStartPos.x < currentPos.x;
 
       let dash: Array<number> | undefined = undefined;
       if (!intersectSelect) {
@@ -170,6 +170,8 @@ class Selection {
 
     if (this.selectionBox) {
       const boxRect = this.selectionBox.getClientRect();
+
+      console.log(boxRect);
 
       // Convert screen coordinates to world coordinates for intersection testing
       const transform = this.stage.getAbsoluteTransform().copy().invert();

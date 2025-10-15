@@ -34,7 +34,7 @@
       if (!stage) {
         return;
       }
-      //new Grid(stageManager.layerManager.baseLayer, stage);
+      //new Grid(viewport.layerManager.baseLayer, stage);
       new DotGrid(viewport.layerManager.baseLayer, stage);
     }
   });

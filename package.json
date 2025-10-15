@@ -35,9 +35,11 @@
   },
   "dependencies": {
     "@lucide/svelte": "^0.511.0",
+    "@types/rbush": "^4.0.0",
     "konva": "^9.3.20",
     "prettier-plugin-svelte": "^3.4.0",
     "radix-svelte": "^0.9.0",
+    "rbush": "^4.0.1",
     "svelte-radix": "^2.0.1",
     "svelte-spa-router": "^4.0.1",
     "uuid": "^11.1.0"
