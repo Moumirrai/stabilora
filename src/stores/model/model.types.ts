@@ -14,6 +14,7 @@ export interface Element {
     width: number;
     opacity: number;
   };
+  selected?: boolean;
 }
 
 export interface Node {
@@ -28,6 +29,7 @@ export interface Node {
     radius: number;
     opacity: number;
   };
+  selected?: boolean;
 }
 
 /* // Strongly typed loads

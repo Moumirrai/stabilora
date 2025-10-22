@@ -3,6 +3,11 @@ import type { Stage } from 'konva/lib/Stage';
 import type { Layer } from 'konva/lib/Layer';
 import type { Vector2d } from 'konva/lib/types';
 import type Viewport from './viewport';
+import { spatialIndex, modelStore } from '../stores/model/store';
+import { get } from 'svelte/store';
+import { SpatialItemType } from '../stores/model/ISpatialItem';
+type Point = { x: number; y: number };
+type Rect = { minX: number; minY: number; maxX: number; maxY: number };
 
 class Selection {
   private readonly stage: Stage;
@@ -156,8 +161,91 @@ class Selection {
       this.selectionBox.setAttrs({ x, y, width, height, dash });
       this.guiLayer.batchDraw();
 
-      const rect = [x, y, currentPos.x, currentPos.y];
+      const rect = {
+        minX: Math.min(this.selectionBoxStartPos.x, currentPos.x),
+        minY: Math.min(this.selectionBoxStartPos.y, currentPos.y),
+        maxX: Math.max(this.selectionBoxStartPos.x, currentPos.x),
+        maxY: Math.max(this.selectionBoxStartPos.y, currentPos.y),
+      };
+      //console.log('Selection rect:', rect);
+      let result = spatialIndex.search(rect);
+      result = result.filter((item) => item.type == SpatialItemType.Element);
+      //check line intersection for each element
+      const model = get(modelStore);
+      let test = [];
+      for (const item of result) {
+        const element = model.elements.find((el) => el.id === item.id);
+        if (!element) continue;
+        const x1 = element.nodeA.dx;
+        const y1 = element.nodeA.dy;
+        const x2 = element.nodeB.dx;
+        const y2 = element.nodeB.dy;
+
+        if (this.lineIntersectsBox(x1, y1, x2, y2, rect)) {
+          test.push(item);
+        }
+
+        //check if line intersect with selection box
+      }
+      //console.log(test);
     }
+  };
+
+  // Helper: Check if two lines (p1-p2 and q1-q2) intersect
+
+  // Helper: Check if two lines (p1-p2 and q1-q2) intersect
+  private linesIntersect = (
+    p1: Point,
+    p2: Point,
+    q1: Point,
+    q2: Point
+  ): boolean => {
+    function ccw(a: Point, b: Point, c: Point): boolean {
+      return (c.y - a.y) * (b.x - a.x) > (b.y - a.y) * (c.x - a.x);
+    }
+    return (
+      ccw(p1, q1, q2) !== ccw(p2, q1, q2) && ccw(p1, p2, q1) !== ccw(p1, p2, q2)
+    );
+  };
+
+  // Helper: Check if a line (x1,y1)-(x2,y2) intersects with a box
+  private lineIntersectsBox = (
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    rect: Rect
+  ): boolean => {
+    // Box corners
+    const topLeft: Point = { x: rect.minX, y: rect.minY };
+    const topRight: Point = { x: rect.maxX, y: rect.minY };
+    const bottomLeft: Point = { x: rect.minX, y: rect.maxY };
+    const bottomRight: Point = { x: rect.maxX, y: rect.maxY };
+
+    // Box edges
+    const edges: [Point, Point][] = [
+      [topLeft, topRight],
+      [topRight, bottomRight],
+      [bottomRight, bottomLeft],
+      [bottomLeft, topLeft],
+    ];
+
+    // Check intersection with any edge
+    for (const [p1, p2] of edges) {
+      if (this.linesIntersect({ x: x1, y: y1 }, { x: x2, y: y2 }, p1, p2)) {
+        return true;
+      }
+    }
+
+    // Also check if the line is completely inside the box
+    function pointInRect(x: number, y: number, r: Rect): boolean {
+      return x >= r.minX && x <= r.maxX && y >= r.minY && y <= r.maxY;
+    }
+    if (pointInRect(x1, y1, rect) && pointInRect(x2, y2, rect)) {
+      return true;
+    }
+
+    return false;
   };
 
   private handleMouseUp = (e: Konva.KonvaEventObject<MouseEvent>) => {

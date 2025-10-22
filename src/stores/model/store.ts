@@ -2,7 +2,7 @@ import { writable } from 'svelte/store';
 import type { Model, Node, Element } from './model.types';
 import { v4 as uuidv4 } from 'uuid';
 import RBush from 'rbush';
-import type { SpatialItem } from './ISpatialItem';
+import { SpatialItemType, type SpatialItem } from './ISpatialItem';
 
 // initial state for the model
 
@@ -46,6 +46,7 @@ export const reindexModel = (currentModel: Model) => {
       maxX: node.dx,
       maxY: node.dy,
       id: node.id,
+      type: SpatialItemType.Node,
     }));
   }
   if (currentModel.elements) {
@@ -60,6 +61,7 @@ export const reindexModel = (currentModel: Model) => {
         maxX,
         maxY,
         id: element.id,
+        type: SpatialItemType.Element,
       };
     });
     items = items.concat(elementItems);
@@ -67,7 +69,7 @@ export const reindexModel = (currentModel: Model) => {
   if (items.length > 0) {
     spatialIndex.load(items);
   }
-}
+};
 // create the writable store
 export const internalStore = writable<Model>(initialModel);
 
