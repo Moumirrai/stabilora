@@ -56,7 +56,7 @@
         y2="154"
         stroke="white"
         stroke-width="2"
-        on:click={() => push('/app')}
+        onclick={() => push('/app')}
         class="animated-support"
       />
     </svg>

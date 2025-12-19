@@ -65,8 +65,8 @@
     bind:this={cardElement}
     class="bg-background border border-border shadow-md rounded-md text-sm text-foreground"
     style={cardStyle}
-    on:click|stopPropagation={() => {}}
-    on:wheel|stopPropagation={() => {}}
+    onclick={() => {}}
+    onwheel={() => {}}
   >
     <p><strong>Node ID:</strong> {node.id}</p>
     <p>

@@ -28,19 +28,19 @@
   <div class="space-y-4 py-4">
     <div class="px-3 py-2">
       <h2 class="mb-2 px-4 text-lg font-semibold tracking-tight">Stabilora</h2>
-      <Button variant="outline" class="w-full" on:click={() => addRandomNode()}>
+      <Button variant="outline" class="w-full" onclick={() => addRandomNode()}>
         Add Random Node
       </Button>
-      <Button variant="outline" class="w-full" on:click={() => db.undo()}>
+      <Button variant="outline" class="w-full" onclick={() => db.undo()}>
         Undo
       </Button>
-      <Button variant="outline" class="w-full" on:click={() => db.redo()}>
+      <Button variant="outline" class="w-full" onclick={() => db.redo()}>
         Redo
       </Button>
-      <Button variant="outline" class="w-full" on:click={() => reindexModel($modelStore)}>
+      <Button variant="outline" class="w-full" onclick={() => reindexModel($modelStore)}>
         Reindex
       </Button>
-      <Button variant="outline" class="w-full" on:click={() => console.log(spatialIndex)}>
+      <Button variant="outline" class="w-full" onclick={() => console.log(spatialIndex)}>
         Print
       </Button>
     </div>
