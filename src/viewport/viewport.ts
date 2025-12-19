@@ -1,7 +1,7 @@
 import Konva from 'konva';
 import LayerManager from './LayerManager';
 import type { IRect } from 'konva/lib/types';
-import Selection from './selection';
+import Selection from './selection/selection';
 
 export interface StageManagerConfig {
   zoomEnabled?: boolean;

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cn } from '$lib/utils.js';
   import { Button } from '$lib/components/ui/button';
-  import { modelStore } from '../../stores/model/store';
+  import { reindexModel, modelStore, spatialIndex } from '../../stores/model/store';
 
   let className: string | null | undefined = undefined;
   export { className as class };
@@ -36,6 +36,12 @@
       </Button>
       <Button variant="outline" class="w-full" on:click={() => db.redo()}>
         Redo
+      </Button>
+      <Button variant="outline" class="w-full" on:click={() => reindexModel($modelStore)}>
+        Reindex
+      </Button>
+      <Button variant="outline" class="w-full" on:click={() => console.log(spatialIndex)}>
+        Print
       </Button>
     </div>
   </div>

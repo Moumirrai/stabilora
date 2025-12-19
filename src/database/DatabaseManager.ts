@@ -1,15 +1,14 @@
-import { derived, writable, type Readable } from 'svelte/store';
-import { internalStore } from '../stores/model/store';
+import { derived, get, writable, type Readable } from 'svelte/store';
+import { modelStore } from '../stores/model/store';
 import type { Transaction } from './Transaction';
+import type { Element, Node } from '../stores/model/model.types';
 
 class Database {
   // single instance of the Database
   private static instance: Database;
   private historyLimit = 100; // limit for the undo/redo stacks
 
-  public readonly store = {
-    subscribe: internalStore.subscribe,
-  };
+  public readonly model = modelStore;
 
   private _undoStackStore = writable<Transaction[]>([]);
   private _redoStackStore = writable<Transaction[]>([]);
@@ -91,6 +90,37 @@ class Database {
       transaction.do();
       this._undoStackStore.update((stack) => [...stack, transaction!]);
     }
+  }
+
+  public getItemsById(ids: string[] /* type enum */): {
+    nodes: Node[];
+    elements: Element[];
+  } {
+    const model = get(this.model);
+    const nodes: Node[] = [];
+    const elements: Element[] = [];
+
+    let joinedIds = new Set(ids);
+
+    if (model.nodes) {
+      for (const node of model.nodes) {
+        if (joinedIds.has(node.id)) {
+          nodes.push(node);
+          joinedIds.delete(node.id);
+        }
+      }
+    }
+
+    if (model.elements) {
+      for (const element of model.elements) {
+        if (joinedIds.has(element.id)) {
+          elements.push(element);
+          joinedIds.delete(element.id);
+        }
+      }
+    }
+
+    return { nodes, elements };
   }
 }
 

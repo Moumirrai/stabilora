@@ -2,7 +2,19 @@ import Konva from 'konva';
 import type { Stage } from 'konva/lib/Stage';
 import type { Layer } from 'konva/lib/Layer';
 import type { Vector2d } from 'konva/lib/types';
-import type Viewport from './viewport';
+import type Viewport from '../viewport';
+import {
+  spatialIndex,
+  modelStore,
+  internalStore,
+} from '../../stores/model/store';
+import { db } from '../../database/DatabaseManager';
+import { get } from 'svelte/store';
+import {
+  SpatialItemType,
+  type SpatialItem,
+} from '../../stores/model/ISpatialItem';
+import { lineIntersectsBox } from './utils';
 
 class Selection {
   private readonly stage: Stage;
@@ -144,19 +156,56 @@ class Selection {
       const width = Math.abs(currentPos.x - this.selectionBoxStartPos.x);
       const height = Math.abs(currentPos.y - this.selectionBoxStartPos.y);
 
-      const intersectSelect = this.selectionBoxStartPos.x < currentPos.x
+      const intersectSelect = this.selectionBoxStartPos.x < currentPos.x;
 
       let dash: Array<number> | undefined = undefined;
       if (!intersectSelect) {
-        dash = [5, 5];
+        dash = [8, 8];
       }
-
-      //console.log(`Selection box: x=${x}, y=${y}, width=${width}, height=${height}`);
 
       this.selectionBox.setAttrs({ x, y, width, height, dash });
       this.guiLayer.batchDraw();
 
-      const rect = [x, y, currentPos.x, currentPos.y];
+      const rect = {
+        minX: Math.min(this.selectionBoxStartPos.x, currentPos.x),
+        minY: Math.min(this.selectionBoxStartPos.y, currentPos.y),
+        maxX: Math.max(this.selectionBoxStartPos.x, currentPos.x),
+        maxY: Math.max(this.selectionBoxStartPos.y, currentPos.y),
+      };
+
+      const raw_result = spatialIndex.search(rect);
+
+      const elements = raw_result.filter(
+        (item) => item.type == SpatialItemType.Element
+      );
+      const nodes = raw_result.filter(
+        (item) => item.type == SpatialItemType.Node
+      );
+
+      const model = get(db.model);
+
+      const filteredElements: SpatialItem[] = [];
+
+      for (const item of elements) {
+        const element = model.elements.find((el) => el.id === item.id);
+        if (!element) continue;
+        const x1 = element.nodeA.dx;
+        const y1 = element.nodeA.dy;
+        const x2 = element.nodeB.dx;
+        const y2 = element.nodeB.dy;
+
+        if (lineIntersectsBox(x1, y1, x2, y2, rect)) {
+          filteredElements.push(item);
+        }
+      }
+
+      // const maybeUseful = db.getItemsById([...nodes.map(n => n.id), ...filteredElements.map(e => e.id)]);
+      // maybeUseful.elements
+      // maybeUseful.nodes
+
+      const test = [...nodes, ...filteredElements];
+
+      console.log(test);
     }
   };
 
@@ -170,6 +219,8 @@ class Selection {
 
     if (this.selectionBox) {
       const boxRect = this.selectionBox.getClientRect();
+
+      console.log(boxRect);
 
       // Convert screen coordinates to world coordinates for intersection testing
       const transform = this.stage.getAbsoluteTransform().copy().invert();

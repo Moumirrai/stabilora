@@ -1,6 +1,8 @@
 import { writable } from 'svelte/store';
 import type { Model, Node, Element } from './model.types';
 import { v4 as uuidv4 } from 'uuid';
+import RBush from 'rbush';
+import { SpatialItemType, type SpatialItem } from './ISpatialItem';
 
 // initial state for the model
 
@@ -32,6 +34,42 @@ const initDebugModel = (): Model => {
 
 const initialModel: Model = initDebugModel();
 
+export const spatialIndex = new RBush<SpatialItem>();
+
+export const reindexModel = (currentModel: Model) => {
+  spatialIndex.clear();
+  let items: SpatialItem[] = [];
+  if (currentModel.nodes) {
+    items = currentModel.nodes.map((node) => ({
+      minX: node.dx,
+      minY: node.dy,
+      maxX: node.dx,
+      maxY: node.dy,
+      id: node.id,
+      type: SpatialItemType.Node,
+    }));
+  }
+  if (currentModel.elements) {
+    const elementItems = currentModel.elements.map((element) => {
+      const minX = Math.min(element.nodeA.dx, element.nodeB.dx);
+      const minY = Math.min(element.nodeA.dy, element.nodeB.dy);
+      const maxX = Math.max(element.nodeA.dx, element.nodeB.dx);
+      const maxY = Math.max(element.nodeA.dy, element.nodeB.dy);
+      return {
+        minX,
+        minY,
+        maxX,
+        maxY,
+        id: element.id,
+        type: SpatialItemType.Element,
+      };
+    });
+    items = items.concat(elementItems);
+  }
+  if (items.length > 0) {
+    spatialIndex.load(items);
+  }
+};
 // create the writable store
 export const internalStore = writable<Model>(initialModel);
 
