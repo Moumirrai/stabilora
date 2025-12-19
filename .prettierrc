@@ -3,10 +3,7 @@
   "singleQuote": true,
   "tabWidth": 2,
   "trailingComma": "es5",
-  "plugins": [
-    "prettier-plugin-tailwindcss",
-    "prettier-plugin-svelte"
-  ],
+  "plugins": ["prettier-plugin-tailwindcss", "prettier-plugin-svelte"],
   "overrides": [
     {
       "files": "*.svelte",
@@ -14,5 +11,6 @@
         "parser": "svelte"
       }
     }
-  ]
+  ],
+  "tailwindStylesheet": "./src/app.css"
 }

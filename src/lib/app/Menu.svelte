@@ -34,7 +34,7 @@
   <Menubar.Menu>
     <Menubar.Trigger class="relative">View</Menubar.Trigger>
     <Menubar.Content>
-      <Menubar.Item on:click={() => get(viewportStore)?.fitInView(0.3)}>
+      <Menubar.Item onclick={() => get(viewportStore)?.fitInView(0.3)}>
         Fit in view
       </Menubar.Item>
     </Menubar.Content>
@@ -47,7 +47,7 @@
     <Menubar.Trigger>Help</Menubar.Trigger>
     <Menubar.Content>
       <Menubar.Item
-        on:click={() =>
+        onclick={() =>
           window
             .open('https://github.com/Moumirrai/stabilora/issues/new', '_blank')
             ?.focus()}
@@ -58,12 +58,11 @@
     </Menubar.Content>
   </Menubar.Menu>
   <Separator orientation="vertical" class="h-[20px]" />
-  <Tooltip.Root openDelay={0} group>
-    <Tooltip.Trigger id="undo_tooltip" asChild let:builder>
+  <Tooltip.Root delayDuration={0}>
+    <Tooltip.Trigger id="undo_tooltip">
       <Button
-        builders={[builder]}
         disabled={!$canUndo}
-        on:click={() => {
+        onclick={() => {
           db.undo();
         }}
         variant="ghost"
@@ -72,12 +71,11 @@
     </Tooltip.Trigger>
     <Tooltip.Content><p>Undo (Ctrl + Z)</p></Tooltip.Content>
   </Tooltip.Root>
-  <Tooltip.Root openDelay={0} group>
-    <Tooltip.Trigger id="redo_tooltip" asChild let:builder>
+  <Tooltip.Root delayDuration={0}>
+    <Tooltip.Trigger id="redo_tooltip">
       <Button
-        builders={[builder]}
         disabled={!$canRedo}
-        on:click={() => {
+        onclick={() => {
           db.redo();
         }}
         variant="ghost"
