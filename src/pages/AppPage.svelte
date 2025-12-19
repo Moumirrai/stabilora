@@ -1,5 +1,5 @@
 <script lang="ts">
-  import KonvaTest from '../components/ViewportComponent.svelte';
+  import Viewport from '../components/ViewportComponent.svelte';
   import Menu from '$lib/app/Menu.svelte';
   import Sidebar from '$lib/app/Sidebar.svelte';
   import NodeInfoCard from '../components/NodeInfoCard.svelte';
@@ -13,7 +13,7 @@
   <div class="grid grid-cols-[auto_1fr] overflow-hidden">
     <Sidebar class="w-80 flex-shrink-0 border-r overflow-y-auto" />
     <div class="relative overflow-hidden min-w-0 min-h-0">
-      <KonvaTest />
+      <Viewport />
       <NodeInfoCard />
     </div>
   </div>
