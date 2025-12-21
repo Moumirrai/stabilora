@@ -5,14 +5,15 @@ import type { Model } from '../../stores/model/model.types';
 import type Viewport from '../viewport';
 import NodeRenderer from './NodeRenderer';
 import ElementRenderer from './ElementRenderer';
+import SupportRenderer from './SupportRenderer';
+import type IRenderer from './IRenderer';
 
 class ModelRenderer {
+  private readonly renderers: IRenderer[] = [];
   private readonly stageManager: Viewport;
-  private readonly targetLayer: Konva.Layer;
   private readonly store: Readable<Model>;
   private storeUnsubscriber: Unsubscriber | null = null;
-  private nodeRenderer: NodeRenderer;
-  private elementRenderer: ElementRenderer;
+  private readonly targetLayer: Konva.Layer;
 
   constructor(
     stageManager: Viewport,
@@ -22,11 +23,11 @@ class ModelRenderer {
     this.stageManager = stageManager;
     this.store = store;
     this.targetLayer = layer;
-    this.nodeRenderer = new NodeRenderer(this.targetLayer, this.stageManager);
-    this.elementRenderer = new ElementRenderer(
-      this.targetLayer,
-      this.stageManager
-    );
+    this.renderers = [
+      new SupportRenderer(),
+      new NodeRenderer(),
+      new ElementRenderer(),
+    ];
   }
 
   public initialize(): void {
@@ -41,27 +42,20 @@ class ModelRenderer {
   }
 
   private updateView(model: Model): void {
-    model.elements.forEach((element) => {
-      this.elementRenderer.updateElement(element);
-    });
-    this.nodeRenderer.updateAllNodes();
+    const viewport = this.stageManager;
+    const layer = this.targetLayer;
+    this.renderers.forEach(renderer => renderer.update(model, viewport, layer));
     this.targetLayer.batchDraw();
-    /*model.nodes.forEach((node) => {
-      this.nodeRenderer.updateNode(node);
-    });*/
   }
 
   private drawModel(model: Model): void {
     this.targetLayer.destroyChildren();
-    this.nodeRenderer.reset();
-    model.elements.forEach((element) => {
-      this.elementRenderer.drawElement(element);
+    const viewport = this.stageManager;
+    const layer = this.targetLayer;
+    this.renderers.forEach(renderer => {
+      renderer.reset();
+      renderer.draw(model, viewport, layer);
     });
-
-    model.nodes.forEach((node) => {
-      this.nodeRenderer.drawNode(node);
-    });
-
     this.targetLayer.batchDraw();
   }
 

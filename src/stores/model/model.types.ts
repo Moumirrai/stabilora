@@ -22,7 +22,7 @@ export interface Node {
   name: number;
   dx: number;
   dy: number;
-  //constraint: NodeConstraint;
+  constraint?: NodeConstraint;
   //loads: Record<string, NodeLoad>; // loadCaseId -> loads
   style?: {
     color: string;
@@ -30,6 +30,12 @@ export interface Node {
     opacity: number;
   };
   selected?: boolean;
+}
+
+export interface NodeConstraint {
+  fixedX?: boolean;
+  fixedY?: boolean;
+  fixedRotation?: boolean;
 }
 
 /* // Strongly typed loads

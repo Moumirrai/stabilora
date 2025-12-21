@@ -1,6 +1,8 @@
 import Konva from 'konva';
-import type { Element } from '../../stores/model/model.types';
+import type { Element, Model } from '../../stores/model/model.types';
 import type Viewport from '../viewport';
+import type IRenderer from './IRenderer';
+import type { IRect } from 'konva/lib/types';
 
 // Liang-Barsky line clipping algorithm
 function clipLineSegment(
@@ -57,9 +59,8 @@ function clipLineSegment(
   return [clippedX1, clippedY1, clippedX2, clippedY2];
 }
 
-class ElementRenderer {
-  private targetLayer: Konva.Layer;
-  private stageManager: Viewport;
+class ElementRenderer implements IRenderer {
+  private elementGroups: Map<string | number, Konva.Group> = new Map(); // Cache for element groups
 
   private elementColor = '#fff';
   private bottomFiberColor = '#fff';
@@ -70,32 +71,23 @@ class ElementRenderer {
     return [10 / scale, 10 / scale]; // dash pattern for the dashed line
   }
 
-  constructor(targetLayer: Konva.Layer, stageManager: Viewport) {
-    this.targetLayer = targetLayer;
-    this.stageManager = stageManager;
+  constructor() {}
+
+  public draw(model: Model, viewport: Viewport, layer: Konva.Layer): void {
+    this.reset();
+    const scale = viewport.getStage()?.scaleX() || 1;
+    const viewportRect = viewport.getViewportRect();
+    model.elements.forEach(element => this.drawElement(element, scale, viewportRect, layer));
   }
 
-  /**
-   * Updates an existing element's representation or draws it if it doesn't exist.
-   * Handles visibility and clipping based on the current viewport.
-   */
-  public updateElement(element: Element): void {
-    const stage = this.stageManager.getStage();
-    if (!stage) return;
-    const scale = stage.scaleX();
-
-    const elementGroup = this.targetLayer.findOne(
-      `#element-${element.id}`
-    ) as Konva.Group;
-    if (!elementGroup) {
-      const newElementGroup = this.drawElement(element);
-      if (!newElementGroup) {
-        console.warn(`Element ${element.id} could not be drawn.`);
-        return;
+  public update(model: Model, viewport: Viewport, layer: Konva.Layer): void {
+    const scale = viewport.getStage()?.scaleX() || 1;
+    model.elements.forEach(element => {
+      const elementGroup = this.elementGroups.get(element.id);
+      if (elementGroup) {
+        this.updateElementVisibilityAndClipping(element, elementGroup, scale, viewport);
       }
-      return;
-    }
-    this.updateElementVisibilityAndClipping(element, elementGroup, scale);
+    });
   }
 
   /**
@@ -104,9 +96,10 @@ class ElementRenderer {
   private updateElementVisibilityAndClipping(
     element: Element,
     elementGroup: Konva.Group,
-    scale: number
+    scale: number,
+    viewport: Viewport
   ): void {
-    let viewportRect = this.stageManager.getViewportRect();
+    let viewportRect = viewport.getViewportRect();
 
     const x1 = element.nodeA.dx;
     const y1 = element.nodeA.dy;
@@ -195,11 +188,7 @@ class ElementRenderer {
    * Draws a new element representation (solid and dashed line) on the layer.
    * Performs initial visibility check and clipping.
    */
-  public drawElement(element: Element): Konva.Group | null {
-    const stage = this.stageManager.getStage();
-    if (!stage) return null;
-    const scale = stage.scaleX();
-    const viewportRect = this.stageManager.getViewportRect(); // get initial viewport
+  public drawElement(element: Element, scale: number, viewportRect: IRect, layer: Konva.Layer): Konva.Group | null {
 
     const x1 = element.nodeA.dx;
     const y1 = element.nodeA.dy;
@@ -287,8 +276,13 @@ class ElementRenderer {
     elementGroup.add(solidLine);
     elementGroup.add(dashedLine);
 
-    this.targetLayer.add(elementGroup);
+    layer.add(elementGroup);
+    this.elementGroups.set(element.id, elementGroup); // Store in cache for updates
     return elementGroup; // return the created group so we dont have to query it
+  }
+
+  public reset(): void {
+    this.elementGroups.clear();
   }
 }
 

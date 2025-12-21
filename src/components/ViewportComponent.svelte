@@ -24,12 +24,12 @@
       modelRenderer = new ModelRenderer(viewport);
       modelRenderer.initialize();
       viewport.fitInView(0);
-      previewRenderer = new ModelRenderer(
-        viewport,
-        previewStore,
-        viewport.getLayerManager().temporaryLayer
-      );
-      previewRenderer.initialize();
+      // previewRenderer = new ModelRenderer(
+      //   viewport,
+      //   previewStore,
+      //   viewport.getLayerManager().temporaryLayer
+      // );
+      //previewRenderer.initialize();
 
       if (!stage) {
         return;

@@ -1,84 +1,67 @@
 import Konva from 'konva';
-import type { Node } from '../../stores/model/model.types';
+import type { Model, Node } from '../../stores/model/model.types';
 import type Viewport from '../viewport';
 import { selectedNodeStore } from '../../stores/app/store';
+import type IRenderer from './IRenderer';
 
-class NodeRenderer {
-  private targetLayer: Konva.Layer;
-  private stageManager: Viewport;
+class NodeRenderer implements IRenderer {
   private nodeShapes: Map<string | number, Konva.Circle> = new Map(); // Cache for node shapes
 
   private nodeRadius = 5;
   private nodeColor = '#ffffff';
 
-  constructor(targetLayer: Konva.Layer, stageManager: Viewport) {
-    this.targetLayer = targetLayer;
-    this.stageManager = stageManager;
+  constructor() {
   }
 
-  public updateNode(node: Node): void {
-    const stage = this.stageManager.getStage();
+  public update(_: Model, viewport: Viewport, layer: Konva.Layer): void {
+    const stage = viewport.getStage();
     if (!stage) return;
     const scale = stage.scaleX();
     // find the existing node circle from the cache
-    const nodeCircle = this.nodeShapes.get(node.id);
-    if (!nodeCircle) {
-      console.warn(`Node circle for node ${node.id} not found in cache`);
-      return;
+    for (const node of this.nodeShapes.values()) {
+      node.radius(this.nodeRadius / scale); // adjust radius for zoom
     }
-    nodeCircle.radius(this.nodeRadius / scale); // adjust radius for zoom
   }
 
-  public drawNode(node: Node): void {
-    const scale = this.stageManager.getStage()?.scaleX() || 1;
-    const circle = new Konva.Circle({
-      x: node.dx,
-      y: node.dy,
-      radius: this.nodeRadius / scale, // adjust radius for zoom
-      fill: this.nodeColor,
-      draggable: false,
-      id: `node-${node.id}`,
-      hitStrokeWidth: this.nodeRadius * 2 - 1,
-      strokeScaleEnabled: false,
-      selectable: true,
-      perfectDrawEnabled: false,
-      listening: true,
-    });
-
-    // Add to cache
-    this.nodeShapes.set(node.id, circle);
-
-    circle.on('mouseover', () => {
-      circle.fill('red');
-      this.targetLayer.batchDraw();
-    });
-    circle.on('mouseout', () => {
-      circle.fill(this.nodeColor);
-      this.targetLayer.batchDraw();
-    });
-    circle.on('contextmenu', (e) => {
-      e.evt.preventDefault();
-      const screenPos = circle.getAbsolutePosition();
-      selectedNodeStore.set({ node: node, screenPosition: screenPos });
-    });
-    this.targetLayer.add(circle);
+  public draw(model: Model, viewport: Viewport, layer: Konva.Layer): void {
+    const scale = viewport.getStage()?.scaleX() || 1;
+    for (const node of model.nodes) {
+      const circle = new Konva.Circle({
+        x: node.dx,
+        y: node.dy,
+        radius: this.nodeRadius / scale, // adjust radius for zoom
+        fill: this.nodeColor,
+        draggable: false,
+        id: `node-${node.id}`,
+        hitStrokeWidth: this.nodeRadius * 2 - 1,
+        strokeScaleEnabled: false,
+        selectable: true,
+        perfectDrawEnabled: false,
+        listening: true,
+      });
+      // Add to cache
+      this.nodeShapes.set(node.id, circle);
+      circle.on('mouseover', () => {
+        circle.fill('red');
+        layer.batchDraw();
+      });
+      circle.on('mouseout', () => {
+        circle.fill(this.nodeColor);
+        layer.batchDraw();
+      });
+      circle.on('contextmenu', (e) => {
+        e.evt.preventDefault();
+        const screenPos = circle.getAbsolutePosition();
+        selectedNodeStore.set({ node: node, screenPosition: screenPos });
+      });
+      layer.add(circle);
+    }
   }
 
   public reset(): void {
     this.nodeShapes.clear(); // clear the cache
   }
 
-  public updateAllNodes(): void {
-    const stage = this.stageManager.getStage();
-    if (!stage) return;
-    const scale = stage.scaleX();
-
-    const radius = this.nodeRadius / scale;
-    
-    this.nodeShapes.forEach((nodeCircle) => {
-      nodeCircle.radius(radius);
-    });
-  }
 }
 
 export default NodeRenderer;
