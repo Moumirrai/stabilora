@@ -3,6 +3,7 @@ import type { Element, Model } from '../../stores/model/model.types';
 import type Viewport from '../viewport';
 import type IRenderer from './IRenderer';
 import type { IRect } from 'konva/lib/types';
+import type { RenderingConfig } from './store/RenderingConfig';
 
 // Liang-Barsky line clipping algorithm
 function clipLineSegment(
@@ -64,6 +65,7 @@ class ElementRenderer implements IRenderer {
 
   private elementColor = '#fff';
   private bottomFiberColor = '#fff';
+  private solidBottomFiberColor = '#8d8d8d';
   private elementStrokeWidth = 2;
   private offsetDistance = 5; // distance between the solid and dashed line
   private cullingBufferMultiplier = 1; // multiplier for viewport size for culling buffer
@@ -73,19 +75,19 @@ class ElementRenderer implements IRenderer {
 
   constructor() {}
 
-  public draw(model: Model, viewport: Viewport, layer: Konva.Layer): void {
+  public draw(model: Model, viewport: Viewport, layer: Konva.Layer, config: RenderingConfig): void {
     this.reset();
     const scale = viewport.getStage()?.scaleX() || 1;
     const viewportRect = viewport.getViewportRect();
-    model.elements.forEach(element => this.drawElement(element, scale, viewportRect, layer));
+    model.elements.forEach(element => this.drawElement(element, scale, viewportRect, layer, config));
   }
 
-  public update(model: Model, viewport: Viewport, layer: Konva.Layer): void {
+  public update(model: Model, viewport: Viewport, layer: Konva.Layer, config: RenderingConfig): void {
     const scale = viewport.getStage()?.scaleX() || 1;
     model.elements.forEach(element => {
       const elementGroup = this.elementGroups.get(element.id);
       if (elementGroup) {
-        this.updateElementVisibilityAndClipping(element, elementGroup, scale, viewport);
+        this.updateElementVisibilityAndClipping(element, elementGroup, scale, viewport, config);
       }
     });
   }
@@ -97,7 +99,8 @@ class ElementRenderer implements IRenderer {
     element: Element,
     elementGroup: Konva.Group,
     scale: number,
-    viewport: Viewport
+    viewport: Viewport,
+    config: RenderingConfig
   ): void {
     let viewportRect = viewport.getViewportRect();
 
@@ -132,9 +135,9 @@ class ElementRenderer implements IRenderer {
     if (!isVisible) return; // if the bounding box isn't visible, no need to clip/update children
 
     const children = elementGroup.getChildren();
-    if (children.length < 2) return; // expecting solid and dashed lines
+    if (children.length < 1) return; // expecting at least solid line
     const solidLine = children[0] as Konva.Line;
-    const dashedLine = children[1] as Konva.Line;
+    const dashedLine = children.length > 1 ? children[1] as Konva.Line : null;
 
     // calculate line vector
     const dx = x2 - x1;
@@ -144,7 +147,9 @@ class ElementRenderer implements IRenderer {
     // Handle zero-length elements
     if (length < 1e-6) {
       solidLine.visible(false);
-      dashedLine.visible(false);
+      if (dashedLine) {
+        dashedLine.visible(false);
+      }
       return;
     }
 
@@ -158,29 +163,33 @@ class ElementRenderer implements IRenderer {
       solidLine.strokeWidth(this.elementStrokeWidth / scale);
       solidLine.visible(true);
 
-      // calculate dashed line
-      const perpDx = -dy / length; // normalized perpendicular vector
-      const perpDy = dx / length;
-      const offsetDist = this.offsetDistance / scale; // offset distance adjusted for scale
+      if (dashedLine) {
+        // calculate dashed line
+        const perpDx = -dy / length; // normalized perpendicular vector
+        const perpDy = dx / length;
+        const offsetDist = this.offsetDistance / scale; // offset distance adjusted for scale
 
-      const [csx1, csy1, csx2, csy2] = clippedSolidPoints;
+        const [csx1, csy1, csx2, csy2] = clippedSolidPoints;
 
-      // calculate offset points for the dashed line based on clipped solid points
-      const cdx1 = csx1 + perpDx * offsetDist;
-      const cdy1 = csy1 + perpDy * offsetDist;
-      const cdx2 = csx2 + perpDx * offsetDist;
-      const cdy2 = csy2 + perpDy * offsetDist;
+        // calculate offset points for the dashed line based on clipped solid points
+        const cdx1 = csx1 + perpDx * offsetDist;
+        const cdy1 = csy1 + perpDy * offsetDist;
+        const cdx2 = csx2 + perpDx * offsetDist;
+        const cdy2 = csy2 + perpDy * offsetDist;
 
-      dashedLine.points([cdx1, cdy1, cdx2, cdy2]);
-      dashedLine.dash(this.dashPattern(scale));
-      dashedLine.visible(true);
-      dashedLine.strokeWidth(this.elementStrokeWidth / scale);
-      // ensure dash style is enabled
-      dashedLine.dashEnabled(true);
+        dashedLine.points([cdx1, cdy1, cdx2, cdy2]);
+        dashedLine.dash(config.element.bottomFibersDashed ? this.dashPattern(scale) : []);
+        dashedLine.stroke(config.element.bottomFibersDashed ? this.bottomFiberColor : this.solidBottomFiberColor);
+        dashedLine.dashEnabled(config.element.bottomFibersDashed);
+        dashedLine.visible(true);
+        dashedLine.strokeWidth(this.elementStrokeWidth / scale);
+      }
     } else {
       // solid line is completely outside the buffered viewport
       solidLine.visible(false);
-      dashedLine.visible(false);
+      if (dashedLine) {
+        dashedLine.visible(false);
+      }
     }
   }
 
@@ -188,7 +197,7 @@ class ElementRenderer implements IRenderer {
    * Draws a new element representation (solid and dashed line) on the layer.
    * Performs initial visibility check and clipping.
    */
-  public drawElement(element: Element, scale: number, viewportRect: IRect, layer: Konva.Layer): Konva.Group | null {
+  public drawElement(element: Element, scale: number, viewportRect: IRect, layer: Konva.Layer, config: RenderingConfig): Konva.Group | null {
 
     const x1 = element.nodeA.dx;
     const y1 = element.nodeA.dy;
@@ -262,19 +271,22 @@ class ElementRenderer implements IRenderer {
       visible: areLinesDrawable && isInitiallyVisible, // visible only if drawable and group is visible
     });
 
-    const dashedLine = new Konva.Line({
-      points: dashedPoints,
-      stroke: this.bottomFiberColor,
-      strokeWidth: this.elementStrokeWidth / scale,
-      //strokeScaleEnabled: false,
-      dash: this.dashPattern(scale),
-      dashEnabled: areLinesDrawable, // enable dash only if line has length
-      perfectDrawEnabled: false,
-      visible: areLinesDrawable && isInitiallyVisible, // visible only if drawable and group is visible
-    });
-
     elementGroup.add(solidLine);
-    elementGroup.add(dashedLine);
+
+    if (config.element.bottomFibersVisible) {
+      const dashedLine = new Konva.Line({
+        points: dashedPoints,
+        stroke: config.element.bottomFibersDashed ? this.bottomFiberColor : this.solidBottomFiberColor,
+        strokeWidth: this.elementStrokeWidth / scale,
+        //strokeScaleEnabled: false,
+        dash: config.element.bottomFibersDashed ? this.dashPattern(scale) : [],
+        dashEnabled: config.element.bottomFibersDashed,
+        perfectDrawEnabled: false,
+        visible: areLinesDrawable && isInitiallyVisible, // visible only if drawable and group is visible
+      });
+
+      elementGroup.add(dashedLine);
+    }
 
     layer.add(elementGroup);
     this.elementGroups.set(element.id, elementGroup); // Store in cache for updates

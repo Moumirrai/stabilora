@@ -306,6 +306,7 @@ class Selection {
           this.selectionBox.destroy();
           this.selectionBox = null;
         }
+        this.fadeOutTween?.destroy();
         this.fadeOutTween = null;
         this.guiLayer.batchDraw();
       },

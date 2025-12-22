@@ -7,13 +7,17 @@ import NodeRenderer from './NodeRenderer';
 import ElementRenderer from './ElementRenderer';
 import SupportRenderer from './SupportRenderer';
 import type IRenderer from './IRenderer';
+import { renderingConfigStore, type RenderingConfig } from './store/RenderingConfig';
+import type { IRect } from 'konva/lib/types';
 
 class ModelRenderer {
   private readonly renderers: IRenderer[] = [];
   private readonly stageManager: Viewport;
   private readonly store: Readable<Model>;
   private storeUnsubscriber: Unsubscriber | null = null;
+  private configUnsubscriber: Unsubscriber | null = null;
   private readonly targetLayer: Konva.Layer;
+  private currentConfig: RenderingConfig;
 
   constructor(
     stageManager: Viewport,
@@ -23,16 +27,26 @@ class ModelRenderer {
     this.stageManager = stageManager;
     this.store = store;
     this.targetLayer = layer;
+    this.currentConfig = get(renderingConfigStore); // Initial config
     this.renderers = [
       new SupportRenderer(),
-      new NodeRenderer(),
       new ElementRenderer(),
+      new NodeRenderer(),
     ];
   }
 
   public initialize(): void {
     this.storeUnsubscriber = this.store.subscribe((model) => {
       this.drawModel(model);
+    });
+    this.configUnsubscriber = renderingConfigStore.subscribe((config) => {
+      this.currentConfig = config;
+      const model = get(this.store);
+      if (config.isDirty) {
+        this.drawModel(model);
+      } else {
+        this.updateView(model);
+      }
     });
     const stage = this.stageManager.getStage();
     if (!stage) return;
@@ -44,7 +58,7 @@ class ModelRenderer {
   private updateView(model: Model): void {
     const viewport = this.stageManager;
     const layer = this.targetLayer;
-    this.renderers.forEach(renderer => renderer.update(model, viewport, layer));
+    this.renderers.forEach(renderer => renderer.update(model, viewport, layer, this.currentConfig));
     this.targetLayer.batchDraw();
   }
 
@@ -54,8 +68,25 @@ class ModelRenderer {
     const layer = this.targetLayer;
     this.renderers.forEach(renderer => {
       renderer.reset();
-      renderer.draw(model, viewport, layer);
+      renderer.draw(model, viewport, layer, this.currentConfig);
     });
+    //from nodes in model, get min and max x and y, create IRect
+    const nodes = model.nodes;
+    if (nodes.length === 0) {
+      // Handle empty case, perhaps set a default rect or skip
+      return;
+    }
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const node of nodes) {
+      minX = Math.min(minX, node.dx);
+      maxX = Math.max(maxX, node.dx);
+      minY = Math.min(minY, node.dy);
+      maxY = Math.max(maxY, node.dy);
+    }
+    const rect: IRect = { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+
+    viewport.customBoundingBox = rect;
+    
     this.targetLayer.batchDraw();
   }
 
@@ -63,6 +94,10 @@ class ModelRenderer {
     if (this.storeUnsubscriber) {
       this.storeUnsubscriber();
       this.storeUnsubscriber = null;
+    }
+    if (this.configUnsubscriber) {
+      this.configUnsubscriber();
+      this.configUnsubscriber = null;
     }
   }
 }

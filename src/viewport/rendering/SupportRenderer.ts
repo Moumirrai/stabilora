@@ -2,6 +2,7 @@ import Konva from 'konva';
 import type { Model, Node } from '../../stores/model/model.types';
 import type Viewport from '../viewport';
 import type IRenderer from './IRenderer';
+import type { RenderingConfig } from './store/RenderingConfig';
 
 
 // SVG path data for different support types
@@ -34,8 +35,6 @@ const supportConfigs = {
     rotation: 90,
   }
 };
-
-const scaleFactor = 1; // Base scale factor for supports
 
 class SupportRenderer implements IRenderer {
   private supportShapes: Map<string | number, Konva.Path> = new Map(); // Cache for node shapes
@@ -79,17 +78,23 @@ class SupportRenderer implements IRenderer {
     }));
   }
 
-  public update(_: Model, viewport: Viewport, layer: Konva.Layer): void {
+  public update(_: Model, viewport: Viewport, layer: Konva.Layer, config: RenderingConfig): void {
+    if (!config.supports.visible) {
+      return;
+    }
     const stage = viewport.getStage();
     if (!stage) return;
     const scale = stage.scaleX();
     for (const support of this.supportShapes.values()) {
-      support.scale({ x: scaleFactor / scale, y: scaleFactor / scale }); // scales to counteract viewport zoom
+      support.scale({ x: config.supports.scale / scale, y: config.supports.scale / scale }); // scales to counteract viewport zoom
     }
 
   }
 
-  public draw(model: Model, viewport: Viewport, layer: Konva.Layer): void {
+  public draw(model: Model, viewport: Viewport, layer: Konva.Layer, config: RenderingConfig): void {
+    if (!config.supports.visible) {
+      return;
+    }
     const scale = viewport.getStage()?.scaleX() || 1;
     this.reset();
 
@@ -164,7 +169,7 @@ class SupportRenderer implements IRenderer {
         const support = prototype.clone({
           x: node.dx,
           y: node.dy,
-          scale: { x: 1 / scale, y: 1 / scale },
+          scale: { x: config.supports.scale / scale, y: config.supports.scale / scale },
           rotation: rotation,
           id: `support-${index}`, // unique id for caching
         });

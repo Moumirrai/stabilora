@@ -26,6 +26,8 @@ class Viewport {
   private readonly eventNs = '.stageManagerEvents';
   private readonly uiEventNs = '.uiLayerUpdate';
 
+  public customBoundingBox: IRect | null = null;
+
   constructor(
     container: HTMLDivElement,
     initialConfig: StageManagerConfig = {}
@@ -134,6 +136,7 @@ class Viewport {
         this.emitRedrawAll();
         this.emitZoomed();
         this.stage?.fire('zoomed');
+        tween.destroy();
       },
     });
 
@@ -143,9 +146,14 @@ class Viewport {
   public fitInView(duration: number): void {
     const stage = this.getStage();
     if (!stage) return;
-    const rect = this.getLayerManager().geometryLayer.getClientRect({
-      relativeTo: stage,
-    });
+    let rect: IRect;
+    if (this.customBoundingBox) {
+      rect = { ...this.customBoundingBox };
+    } else {
+      rect = this.getLayerManager().geometryLayer.getClientRect({
+        relativeTo: stage,
+      });
+    }
     if (rect.width === 0 && rect.height === 0) {
       //TODO: rework this
       rect.x = -2000;
@@ -408,6 +416,7 @@ class Viewport {
         this.emitZoomed();
         this.stage?.fire('zoomend');
         this.zooming = false;
+        this.zoomTween?.destroy();
       },
     });
 
