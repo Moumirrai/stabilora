@@ -13,7 +13,7 @@
   </ContextMenu.Trigger>
 
   <ContextMenu.Content class="w-52">
-    <ContextMenu.Item onclick={() => get(viewportStore)?.fitInView(0.3)}>
+    <ContextMenu.Item onclick={() => get(viewportStore)?.fitInView(3)}>
       Fit in View
     </ContextMenu.Item>
     <ContextMenu.Item disabled>
