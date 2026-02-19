@@ -1,7 +1,11 @@
 <script lang="ts">
   import { cn } from '$lib/utils.js';
   import { Button } from '$lib/components/ui/button';
-  import { reindexModel, modelStore, spatialIndex } from '../../stores/model/store';
+  import {
+    reindexModel,
+    modelStore,
+    spatialIndex,
+  } from '../../stores/model/store';
   import TestComponent from '../../components/TestComponent.svelte';
   let className: string | null | undefined = undefined;
   export { className as class };
@@ -37,10 +41,18 @@
       <Button variant="outline" class="w-full" onclick={() => db.redo()}>
         Redo
       </Button>
-      <Button variant="outline" class="w-full" onclick={() => reindexModel($modelStore)}>
+      <Button
+        variant="outline"
+        class="w-full"
+        onclick={() => reindexModel($modelStore)}
+      >
         Reindex
       </Button>
-      <Button variant="outline" class="w-full" onclick={() => console.log(spatialIndex)}>
+      <Button
+        variant="outline"
+        class="w-full"
+        onclick={() => console.log(spatialIndex)}
+      >
         Print
       </Button>
       <TestComponent />

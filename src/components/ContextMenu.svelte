@@ -4,7 +4,6 @@
   import { viewportStore } from '../stores/app/store';
 
   let { children } = $props();
-
 </script>
 
 <ContextMenu.Root>
@@ -20,7 +19,7 @@
       Undo
       <ContextMenu.Shortcut>Ctrl + Z</ContextMenu.Shortcut>
     </ContextMenu.Item>
-    <ContextMenu.Item >
+    <ContextMenu.Item>
       Redo
       <ContextMenu.Shortcut>Ctrl + Y</ContextMenu.Shortcut>
     </ContextMenu.Item>

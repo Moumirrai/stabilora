@@ -17,7 +17,11 @@
   $: renderingConfigStore.update((current) => ({
     ...current,
     node: { ...current.node, scale: nodeScale },
-    supports: { ...current.supports, scale: supportScale, visible: supportsVisible },
+    supports: {
+      ...current.supports,
+      scale: supportScale,
+      visible: supportsVisible,
+    },
     element: {
       ...current.element,
       bottomFibersVisible: indicatorVisible,
@@ -67,4 +71,3 @@
   <Checkbox bind:checked={supportsVisible} id="supports-visible" />
   <Label for="supports-visible">Supports Visible</Label>
 </div>
-
