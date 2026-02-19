@@ -12,10 +12,15 @@ class NodeRenderer implements IRenderer {
   private nodeColor = '#ffffff';
   private cullingBufferMultiplier = 1; // multiplier for viewport size for culling buffer
 
-  constructor() {
-  }
+  constructor() {}
 
-  public update(model: Model, viewport: Viewport, layer: Konva.Layer, config: RenderingConfig): void {
+  public update(
+    model: Model,
+    viewport: Viewport,
+    layer: Konva.Layer,
+    config: RenderingConfig,
+    selection: string[]
+  ): void {
     const stage = viewport.getStage();
     if (!stage) return;
     const scale = stage.scaleX();
@@ -29,14 +34,19 @@ class NodeRenderer implements IRenderer {
     const cullHeight = vheight + 2 * this.cullingBufferMultiplier * vheight;
     const visibleNodeIds = new Set<string | number>();
     for (const node of model.nodes) {
-      if (node.dx >= cullX && node.dx <= cullX + cullWidth && node.dy >= cullY && node.dy <= cullY + cullHeight) {
+      if (
+        node.dx >= cullX &&
+        node.dx <= cullX + cullWidth &&
+        node.dy >= cullY &&
+        node.dy <= cullY + cullHeight
+      ) {
         visibleNodeIds.add(node.id);
         let circle = this.nodeShapes.get(node.id);
         if (!circle) {
           circle = new Konva.Circle({
             x: node.dx,
             y: node.dy,
-            radius: config.node.scale * this.nodeRadius / scale,
+            radius: (config.node.scale * this.nodeRadius) / scale,
             fill: this.nodeColor,
             draggable: false,
             id: `node-${node.id}`,
@@ -46,6 +56,10 @@ class NodeRenderer implements IRenderer {
             perfectDrawEnabled: false,
             listening: true,
           });
+          if (selection.includes(`node-${node.id}`)) {
+            circle.stroke('red'); //todo control color from config
+            circle.strokeWidth(2);
+          }
           circle.on('mouseover', () => {
             circle!.fill('red');
             layer.batchDraw();
@@ -64,7 +78,7 @@ class NodeRenderer implements IRenderer {
         } else {
           circle.x(node.dx);
           circle.y(node.dy);
-          circle.radius(config.node.scale * this.nodeRadius / scale);
+          circle.radius((config.node.scale * this.nodeRadius) / scale);
         }
       }
     }
@@ -76,7 +90,13 @@ class NodeRenderer implements IRenderer {
     }
   }
 
-  public draw(model: Model, viewport: Viewport, layer: Konva.Layer, config: RenderingConfig): void {
+  public draw(
+    model: Model,
+    viewport: Viewport,
+    layer: Konva.Layer,
+    config: RenderingConfig,
+    selection: string[]
+  ): void {
     const stage = viewport.getStage();
     if (!stage) return;
     const scale = stage.scaleX();
@@ -89,11 +109,16 @@ class NodeRenderer implements IRenderer {
     const cullWidth = vwidth + 2 * this.cullingBufferMultiplier * vwidth;
     const cullHeight = vheight + 2 * this.cullingBufferMultiplier * vheight;
     for (const node of model.nodes) {
-      if (node.dx >= cullX && node.dx <= cullX + cullWidth && node.dy >= cullY && node.dy <= cullY + cullHeight) {
+      if (
+        node.dx >= cullX &&
+        node.dx <= cullX + cullWidth &&
+        node.dy >= cullY &&
+        node.dy <= cullY + cullHeight
+      ) {
         const circle = new Konva.Circle({
           x: node.dx,
           y: node.dy,
-          radius: config.node.scale * this.nodeRadius / scale, // adjust radius for zoom
+          radius: (config.node.scale * this.nodeRadius) / scale, // adjust radius for zoom
           fill: this.nodeColor,
           draggable: false,
           id: `node-${node.id}`,
@@ -103,6 +128,10 @@ class NodeRenderer implements IRenderer {
           perfectDrawEnabled: false,
           listening: true,
         });
+        if (selection.includes(`node-${node.id}`)) {
+          circle.stroke('red');
+          circle.strokeWidth(2);
+        }
         // Add to cache
         this.nodeShapes.set(node.id, circle);
         circle.on('mouseover', () => {
@@ -126,7 +155,6 @@ class NodeRenderer implements IRenderer {
   public reset(): void {
     this.nodeShapes.clear(); // clear the cache
   }
-
 }
 
 export default NodeRenderer;

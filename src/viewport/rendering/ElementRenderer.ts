@@ -75,21 +75,81 @@ class ElementRenderer implements IRenderer {
 
   constructor() {}
 
-  public draw(model: Model, viewport: Viewport, layer: Konva.Layer, config: RenderingConfig): void {
+  public draw(
+    model: Model,
+    viewport: Viewport,
+    layer: Konva.Layer,
+    config: RenderingConfig,
+    selection: string[]
+  ): void {
     this.reset();
     const scale = viewport.getStage()?.scaleX() || 1;
     const viewportRect = viewport.getViewportRect();
-    model.elements.forEach(element => this.drawElement(element, scale, viewportRect, layer, config));
+    model.elements.forEach((element) =>
+      this.drawElement(element, scale, viewportRect, layer, config, selection)
+    );
   }
 
-  public update(model: Model, viewport: Viewport, layer: Konva.Layer, config: RenderingConfig): void {
+  public update(
+    model: Model,
+    viewport: Viewport,
+    layer: Konva.Layer,
+    config: RenderingConfig,
+    selection: string[]
+  ): void {
     const scale = viewport.getStage()?.scaleX() || 1;
-    model.elements.forEach(element => {
+    const viewportRect = viewport.getViewportRect();
+    model.elements.forEach((element) => {
       const elementGroup = this.elementGroups.get(element.id);
       if (elementGroup) {
-        this.updateElementVisibilityAndClipping(element, elementGroup, scale, viewport, config);
+        this.updateElementVisibilityAndClipping(
+          element,
+          elementGroup,
+          scale,
+          viewport,
+          config
+        );
       }
     });
+    for (const element of model.elements) {
+      if (!this.elementGroups.has(element.id)) {
+        const x1 = element.nodeA.dx;
+        const y1 = element.nodeA.dy;
+        const x2 = element.nodeB.dx;
+        const y2 = element.nodeB.dy;
+        const elementBounds = {
+          x: Math.min(x1, x2),
+          y: Math.min(y1, y2),
+          width: Math.abs(x2 - x1),
+          height: Math.abs(y2 - y1),
+        };
+        const bufferedViewport = {
+          x: viewportRect.x - this.cullingBufferMultiplier * viewportRect.width,
+          y:
+            viewportRect.y - this.cullingBufferMultiplier * viewportRect.height,
+          width:
+            viewportRect.width +
+            2 * this.cullingBufferMultiplier * viewportRect.width,
+          height:
+            viewportRect.height +
+            2 * this.cullingBufferMultiplier * viewportRect.height,
+        };
+        const isInitiallyVisible = Konva.Util.haveIntersection(
+          elementBounds,
+          bufferedViewport
+        );
+        if (isInitiallyVisible) {
+          this.drawElement(
+            element,
+            scale,
+            viewportRect,
+            layer,
+            config,
+            selection
+          );
+        }
+      }
+    }
   }
 
   /**
@@ -137,7 +197,7 @@ class ElementRenderer implements IRenderer {
     const children = elementGroup.getChildren();
     if (children.length < 1) return; // expecting at least solid line
     const solidLine = children[0] as Konva.Line;
-    const dashedLine = children.length > 1 ? children[1] as Konva.Line : null;
+    const dashedLine = children.length > 1 ? (children[1] as Konva.Line) : null;
 
     // calculate line vector
     const dx = x2 - x1;
@@ -178,8 +238,14 @@ class ElementRenderer implements IRenderer {
         const cdy2 = csy2 + perpDy * offsetDist;
 
         dashedLine.points([cdx1, cdy1, cdx2, cdy2]);
-        dashedLine.dash(config.element.bottomFibersDashed ? this.dashPattern(scale) : []);
-        dashedLine.stroke(config.element.bottomFibersDashed ? this.bottomFiberColor : this.solidBottomFiberColor);
+        dashedLine.dash(
+          config.element.bottomFibersDashed ? this.dashPattern(scale) : []
+        );
+        dashedLine.stroke(
+          config.element.bottomFibersDashed
+            ? this.bottomFiberColor
+            : this.solidBottomFiberColor
+        );
         dashedLine.dashEnabled(config.element.bottomFibersDashed);
         dashedLine.visible(true);
         dashedLine.strokeWidth(this.elementStrokeWidth / scale);
@@ -197,8 +263,14 @@ class ElementRenderer implements IRenderer {
    * Draws a new element representation (solid and dashed line) on the layer.
    * Performs initial visibility check and clipping.
    */
-  public drawElement(element: Element, scale: number, viewportRect: IRect, layer: Konva.Layer, config: RenderingConfig): Konva.Group | null {
-
+  public drawElement(
+    element: Element,
+    scale: number,
+    viewportRect: IRect,
+    layer: Konva.Layer,
+    config: RenderingConfig,
+    selection: string[]
+  ): Konva.Group | null {
     const x1 = element.nodeA.dx;
     const y1 = element.nodeA.dy;
     const x2 = element.nodeB.dx;
@@ -276,7 +348,9 @@ class ElementRenderer implements IRenderer {
     if (config.element.bottomFibersVisible) {
       const dashedLine = new Konva.Line({
         points: dashedPoints,
-        stroke: config.element.bottomFibersDashed ? this.bottomFiberColor : this.solidBottomFiberColor,
+        stroke: config.element.bottomFibersDashed
+          ? this.bottomFiberColor
+          : this.solidBottomFiberColor,
         strokeWidth: this.elementStrokeWidth / scale,
         //strokeScaleEnabled: false,
         dash: config.element.bottomFibersDashed ? this.dashPattern(scale) : [],

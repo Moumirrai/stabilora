@@ -6,33 +6,53 @@
   import Menu from '$lib/app/Menu.svelte';
   import Sidebar from '$lib/app/Sidebar.svelte';
   import NodeInfoCard from '../components/NodeInfoCard.svelte';
+  import { PaneGroup, Pane, Handle } from '$lib/components/ui/resizable';
 
   let showPanel = false;
 </script>
 
-<div class="h-screen grid grid-rows-[auto_1fr]">
+<div class="h-screen flex flex-col">
   <div class="md:block border-b">
     <Menu />
   </div>
 
-  <div class="grid grid-cols-[auto_1fr] overflow-hidden">
-    <Sidebar class="w-80 flex-shrink-0 border-r overflow-y-auto" />
-    <div class="relative overflow-hidden min-w-0 min-h-0 grid grid-rows-[1fr_auto]">
-      <div class="relative overflow-hidden min-w-0 min-h-0">
-        <StructuralEditor />
-        <NodeInfoCard />
-      </div>
-      {#if showPanel}
-        <div class="border-t p-4 overflow-y-auto h-[300px]" transition:slide={{ duration: 300 }}>
-          <!-- Panel content here -->
-          <p>Toggleable Panel</p>
-          <Button onclick={() => showPanel = false}>Close Panel</Button>
+  <div class="flex-1 overflow-hidden">
+    <PaneGroup direction="horizontal">
+      <Pane defaultSize={15} minSize={10} maxSize={30}>
+        <Sidebar class="w-full h-full border-r overflow-y-auto" />
+      </Pane>
+      <Handle />
+      <Pane defaultSize={80}>
+        <div class="relative overflow-hidden min-w-0 min-h-0 h-full">
+          <PaneGroup direction="vertical">
+            <Pane defaultSize={showPanel ? 70 : 100}>
+              <div class="relative overflow-hidden min-w-0 min-h-0 h-full">
+                <StructuralEditor />
+                <NodeInfoCard />
+                <Button
+                  onclick={() => (showPanel = !showPanel)}
+                  class="absolute bottom-0 right-0 m-2"
+                >
+                  {showPanel ? 'Hide' : 'Show'} Panel
+                </Button>
+              </div>
+            </Pane>
+            {#if showPanel}
+              <Handle />
+              <Pane defaultSize={30} minSize={20} maxSize={50}>
+                <div class="border-t p-4 overflow-y-auto h-full">
+                  <!-- Panel content here -->
+                  <p>Toggleable Panel</p>
+                  <Button onclick={() => (showPanel = false)}
+                    >Close Panel</Button
+                  >
+                </div>
+              </Pane>
+            {/if}
+          </PaneGroup>
         </div>
-      {/if}
-      <Button onclick={() => showPanel = !showPanel} class="absolute bottom-0 right-0 m-2">
-        {showPanel ? 'Hide' : 'Show'} Panel
-      </Button>
-    </div>
+      </Pane>
+    </PaneGroup>
   </div>
 </div>
 

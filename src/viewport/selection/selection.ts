@@ -8,8 +8,10 @@ import {
   modelStore,
   internalStore,
 } from '../../stores/model/store';
+import { selectionStore } from '../../stores/app/store';
 import { db } from '../../database/DatabaseManager';
 import { get } from 'svelte/store';
+import type { Model, Node, Element } from '../../stores/model/model.types';
 import {
   SpatialItemType,
   type SpatialItem,
@@ -21,7 +23,9 @@ class Selection {
   private layer: Layer;
   private guiLayer: Layer;
 
-  public selection: Array<string> = [];
+  private selection: Array<string> = [];
+  private storeUnsubscriber: any = null;
+  private modelUnsubscriber: any = null;
 
   public selectionBox: Konva.Rect | null = null;
   private selectionBoxStartPos: Vector2d | null = null;
@@ -43,22 +47,26 @@ class Selection {
     this.stage = stageManager.getStage()!;
     this.guiLayer = uiLayer;
 
+    this.storeUnsubscriber = selectionStore.subscribe((value) => {
+      this.selection = value;
+    }); //TODO: check this
+
+    this.modelUnsubscriber = modelStore.subscribe((model) => {
+      this.cleanupSelection(model);
+    });
+
     this.stage.on('mousedown.selection', this.handleMouseDown);
     this.stage.on('mousemove.selection', this.handleMouseMove);
     this.stage.on('mouseup.selection', this.handleMouseUp);
-
-    this.stage.on('redraw redrawAll', () => {
-      //console.log('Redrawing selection...');
-      for (const id of this.selection) {
-        const node = this.layer.findOne(`#${id}`);
-        if (!node) continue;
-        this.applySelectionStyle(node);
-      }
-      this.layer.batchDraw();
-    });
   }
 
   public destroy() {
+    if (this.storeUnsubscriber) {
+      this.storeUnsubscriber();
+    }
+    if (this.modelUnsubscriber) {
+      this.modelUnsubscriber();
+    }
     this.stage.off('mousedown.selection');
     this.stage.off('mousemove.selection');
     this.stage.off('mouseup.selection');
@@ -73,24 +81,32 @@ class Selection {
   }
 
   private applySelectionStyle(node: Konva.Node) {
-    const color = 'red';
+    //TODO: remove this
     if (node instanceof Konva.Shape) {
-      node.shadowColor(color);
-      node.shadowBlur(50);
-      node.shadowOpacity(1);
+      node.stroke('red');
+      node.strokeWidth(2);
     } else if (node instanceof Konva.Group) {
       node.getChildren().forEach((child) => {
         if (child instanceof Konva.Shape) {
-          child.shadowColor(color);
-          child.shadowBlur(50);
-          child.shadowOpacity(1);
+          child.stroke('red');
+          child.strokeWidth(2);
         }
       });
     }
   }
 
   private removeSelectionStyle(node: Konva.Node) {
-    //node.shadowEnabled(false);
+    if (node instanceof Konva.Shape) {
+      node.stroke(null);
+      node.strokeWidth(1); // default?
+    } else if (node instanceof Konva.Group) {
+      node.getChildren().forEach((child) => {
+        if (child instanceof Konva.Shape) {
+          child.stroke(null);
+          child.strokeWidth(1);
+        }
+      });
+    }
   }
 
   private finishFadeOutAnimation() {
@@ -108,8 +124,22 @@ class Selection {
       }
     });
     this.selection = [];
-    console.log('Selection cleared');
+    selectionStore.set([]);
     this.layer.batchDraw();
+  }
+
+  private cleanupSelection(model: Model) {
+    const validIds = new Set([
+      ...model.nodes.map((n) => `node-${n.id}`),
+      ...model.elements.map((e) => `element-${e.id}`),
+    ]);
+    const newSelection = this.selection.filter((id) => validIds.has(id));
+    if (newSelection.length !== this.selection.length) {
+      this.selection = newSelection;
+      selectionStore.set(newSelection);
+      // Reapply styles if needed
+      this.layer.batchDraw();
+    }
   }
 
   private handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -173,7 +203,10 @@ class Selection {
         maxY: Math.max(this.selectionBoxStartPos.y, currentPos.y),
       };
 
-      const raw_result = spatialIndex.search(rect);
+      const stage = this.stage;
+      const worldRect = rect;
+
+      const raw_result = spatialIndex.search(worldRect);
 
       const elements = raw_result.filter(
         (item) => item.type == SpatialItemType.Element
@@ -199,13 +232,7 @@ class Selection {
         }
       }
 
-      // const maybeUseful = db.getItemsById([...nodes.map(n => n.id), ...filteredElements.map(e => e.id)]);
-      // maybeUseful.elements
-      // maybeUseful.nodes
-
       const test = [...nodes, ...filteredElements];
-
-      console.log(test);
     }
   };
 
@@ -220,8 +247,6 @@ class Selection {
     if (this.selectionBox) {
       const boxRect = this.selectionBox.getClientRect();
 
-      console.log(boxRect);
-
       // Convert screen coordinates to world coordinates for intersection testing
       const transform = this.stage.getAbsoluteTransform().copy().invert();
       const worldBoxRect = {
@@ -235,7 +260,7 @@ class Selection {
         if (!this.filter(node)) {
           return false;
         }
-        return Konva.Util.haveIntersection(worldBoxRect, node.getClientRect());
+        return Konva.Util.haveIntersection(boxRect, node.getClientRect());
       });
 
       const shapeIdsInBox = new Set(shapesInBox.map((s) => s.id()));
@@ -277,6 +302,8 @@ class Selection {
         }
 
         this.selection = Array.from(shapeIdsInBox);
+
+        selectionStore.set(this.selection);
       }
 
       console.log('Selected item IDs:', this.selection);
@@ -290,6 +317,7 @@ class Selection {
     this.selectionBoxStartPos = null;
 
     if (changed) {
+      selectionStore.set(this.selection);
       this.layer.batchDraw();
     }
   };

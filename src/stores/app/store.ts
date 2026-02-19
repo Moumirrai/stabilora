@@ -13,3 +13,5 @@ export const selectedNodeStore = writable<SelectedNodeState>({
   node: null,
   screenPosition: null,
 });
+
+export const selectionStore = writable<string[]>([]);

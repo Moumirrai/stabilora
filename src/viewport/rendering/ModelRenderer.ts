@@ -7,7 +7,11 @@ import NodeRenderer from './NodeRenderer';
 import ElementRenderer from './ElementRenderer';
 import SupportRenderer from './SupportRenderer';
 import type IRenderer from './IRenderer';
-import { renderingConfigStore, type RenderingConfig } from './store/RenderingConfig';
+import {
+  renderingConfigStore,
+  type RenderingConfig,
+} from './store/RenderingConfig';
+import { selectionStore } from '../../stores/app/store';
 import type { IRect } from 'konva/lib/types';
 
 class ModelRenderer {
@@ -58,7 +62,10 @@ class ModelRenderer {
   private updateView(model: Model): void {
     const viewport = this.stageManager;
     const layer = this.targetLayer;
-    this.renderers.forEach(renderer => renderer.update(model, viewport, layer, this.currentConfig));
+    const selection = get(selectionStore);
+    this.renderers.forEach((renderer) =>
+      renderer.update(model, viewport, layer, this.currentConfig, selection)
+    );
     this.targetLayer.batchDraw();
   }
 
@@ -66,9 +73,10 @@ class ModelRenderer {
     this.targetLayer.destroyChildren();
     const viewport = this.stageManager;
     const layer = this.targetLayer;
-    this.renderers.forEach(renderer => {
+    const selection = get(selectionStore);
+    this.renderers.forEach((renderer) => {
       renderer.reset();
-      renderer.draw(model, viewport, layer, this.currentConfig);
+      renderer.draw(model, viewport, layer, this.currentConfig, selection);
     });
     //from nodes in model, get min and max x and y, create IRect
     const nodes = model.nodes;
@@ -76,18 +84,27 @@ class ModelRenderer {
       // Handle empty case, perhaps set a default rect or skip
       return;
     }
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    let minX = Infinity,
+      maxX = -Infinity,
+      minY = Infinity,
+      maxY = -Infinity;
     for (const node of nodes) {
       minX = Math.min(minX, node.dx);
       maxX = Math.max(maxX, node.dx);
       minY = Math.min(minY, node.dy);
       maxY = Math.max(maxY, node.dy);
     }
-    const rect: IRect = { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+    const rect: IRect = {
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY,
+    };
 
     viewport.customBoundingBox = rect;
-    
+
     this.targetLayer.batchDraw();
+    this.stageManager.emitRedrawAll(); //TODO: check if necessary if we already called batchDraw
   }
 
   public destroy(): void {
