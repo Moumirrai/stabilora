@@ -1,5 +1,6 @@
 <script lang="ts">
   import Viewport from './ViewportComponent.svelte';
+  import PixiViewportComponent from './PixiViewportComponent.svelte';
   import { Button } from '$lib/components/ui/button';
   import * as Card from '$lib/components/ui/card/index.js';
   import { Plus, Square, Trash2, Triangle, Dot, Minus } from '@lucide/svelte';
@@ -26,7 +27,7 @@
 
 <div class="h-full relative">
   <ContextMenu>
-    <Viewport />
+    <PixiViewportComponent />
   </ContextMenu>
   <Card.Root
     class="absolute bottom-4 left-1/2 transform -translate-x-1/2 p-2 flex flex-row gap-2"
