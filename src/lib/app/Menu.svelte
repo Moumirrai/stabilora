@@ -7,7 +7,7 @@
   import * as Tooltip from '$lib/components/ui/tooltip';
   import { viewportStore } from '../../stores/app/store';
   import { get } from 'svelte/store';
-  import { Github } from '@lucide/svelte';
+  import { Code } from '@lucide/svelte';
 
   const { canRedo, canUndo } = db;
 </script>
@@ -51,8 +51,7 @@
           window
             .open('https://github.com/Moumirrai/stabilora/issues/new', '_blank')
             ?.focus()}
-        >New Github Issue<Menubar.Shortcut
-          ><Github size="16" /></Menubar.Shortcut
+        >New Github Issue<Menubar.Shortcut><Code size="16" /></Menubar.Shortcut
         ></Menubar.Item
       >
     </Menubar.Content>
