@@ -1,19 +1,30 @@
 import { Application, Container, Graphics } from 'pixi.js';
 import { CameraController, type CameraConfig } from './CameraController';
+import { DotGridMesh } from './rendering/primitives/DotGridMesh';
+import type { CameraState } from './CameraController';
+import { ViewportUniforms } from './rendering/primitives/ViewportUniforms';
 
 export class ViewportEngine {
   public app: Application;
 
   // main world container (modelspace, grid)
   public worldContainer: Container;
-
   // static locked container (labels, gui)
   public screenContainer: Container;
 
   public camera: CameraController;
+  public cameraUnsubscriber: () => void;
+
+  public grid: DotGridMesh;
 
   private container: HTMLDivElement;
-  //private resizeObserver: ResizeObserver;
+  private resizeObserver: ResizeObserver;
+  private prevWidth = 0;
+  private prevHeight = 0;
+
+  public viewportUniforms = new ViewportUniforms();
+
+  private renderPending = false;
 
   private constructor(
     app: Application,
@@ -22,18 +33,13 @@ export class ViewportEngine {
   ) {
     this.app = app;
     this.container = container;
+    this.prevWidth = this.container.clientWidth;
+    this.prevHeight = this.container.clientHeight;
 
     // setup world container (modelspace, grid)
     this.worldContainer = new Container();
     this.worldContainer.label = 'worldLayer';
     this.app.stage.addChild(this.worldContainer);
-
-    // --- DEBUG SHAPES FOR CAMERA TESTING ---
-    const originSquare = new Graphics().rect(-50, -50, 100, 100).fill(0xff0000);
-    const offsetCircle = new Graphics().circle(200, 200, 50).fill(0x0000ff);
-    this.worldContainer.addChild(originSquare);
-    this.worldContainer.addChild(offsetCircle);
-    // ---------------------------------------
 
     // setup screen container (labels, gui)
     this.screenContainer = new Container();
@@ -47,19 +53,53 @@ export class ViewportEngine {
       cameraConfig
     );
 
-    // camera callback event to rerender
-    this.camera.onUpdate = () => {
-      this.render();
-    };
+    this.cameraUnsubscriber = this.camera.onUpdate.subscribe(
+      this.handleCameraUpdate
+    );
 
-    // responsive resizing, uncomment when centering logic is implemented
-    //this.resizeObserver = new ResizeObserver(() => this.handleResize());
-    //this.resizeObserver.observe(this.container);
+    // --- DEBUG SHAPES FOR CAMERA TESTING ---
+    const offsetCircle = new Graphics().circle(200, 200, 50).fill(0x0000ff);
+    this.worldContainer.addChild(offsetCircle);
+
+    this.grid = new DotGridMesh(
+      this.camera.cameraUniforms,
+      this.viewportUniforms
+    );
+    this.worldContainer.addChildAt(this.grid, 0);
+
+    // Initialize uniforms
+    this.viewportUniforms.uniforms.uStageSize = [
+      this.app.screen.width,
+      this.app.screen.height,
+    ];
+
+    const initialRect = this.getViewportRect();
+    this.grid.position.set(initialRect.x, initialRect.y);
+    this.grid.scale.set(initialRect.width, initialRect.height);
+
+    this.resizeObserver = new ResizeObserver(() => this.handleResize());
+    this.resizeObserver.observe(this.container);
   }
 
-  public render(): void {
-    console.log(this.getViewportRect());
+  private handleCameraUpdate = (state: CameraState): void => {
+    const rect = this.getViewportRect();
+    this.grid.position.set(rect.x, rect.y);
+    this.grid.scale.set(rect.width, rect.height);
+    this.requestRender();
+  };
+
+  private render(): void {
     this.app.renderer.render(this.app.stage);
+  }
+
+  public requestRender(): void {
+    if (this.renderPending) return;
+
+    this.renderPending = true;
+    requestAnimationFrame(() => {
+      this.renderPending = false;
+      this.render();
+    });
   }
 
   /**
@@ -77,7 +117,8 @@ export class ViewportEngine {
       antialias: true,
       resolution: window.devicePixelRatio || 1,
       autoDensity: true,
-      autoStart: false, // do not run continuous game loop, render manually reactively
+      autoStart: false, // do not run continuous game-like render loop, render manually reactively
+      preference: 'webgl', // Force WebGL for GLSL shader support
     });
 
     container.appendChild(app.canvas);
@@ -89,7 +130,38 @@ export class ViewportEngine {
   }
 
   private handleResize(): void {
-    //TODO: implement centering
+    const oldCenterWorld = this.camera.screenToWorld(
+      this.prevWidth / 2,
+      this.prevHeight / 2
+    );
+
+    const newWidth = this.container.clientWidth;
+    const newHeight = this.container.clientHeight;
+
+    // Ensure PIXI renderer / app.screen reflect the new size
+    this.app.renderer.resize(newWidth, newHeight);
+
+    const currentScreen = this.camera.worldToScreen(
+      oldCenterWorld.x,
+      oldCenterWorld.y
+    );
+
+    const desiredScreen = { x: newWidth / 2, y: newHeight / 2 };
+
+    const dx = desiredScreen.x - currentScreen.x;
+    const dy = desiredScreen.y - currentScreen.y;
+
+    this.camera.panBy(dx, dy, true);
+
+    this.prevWidth = newWidth;
+    this.prevHeight = newHeight;
+
+    this.viewportUniforms.uniforms.uStageSize = [
+      this.app.screen.width,
+      this.app.screen.height,
+    ];
+
+    this.requestRender();
   }
 
   /**
@@ -112,9 +184,12 @@ export class ViewportEngine {
   }
 
   public destroy(): void {
-    /* if (this.resizeObserver) {
+    if (this.resizeObserver) {
       this.resizeObserver.disconnect();
-    } */
+    }
+    if (this.cameraUnsubscriber) {
+      this.cameraUnsubscriber();
+    }
     this.camera.destroy();
 
     // destroy the app, children, and WebGL context

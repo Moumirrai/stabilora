@@ -1,4 +1,6 @@
-import {Container} from 'pixi.js';
+import { Container } from 'pixi.js';
+import { CameraUniforms } from './rendering/primitives/CameraUniforms';
+import { EventEmitter } from '../utils/EventEmitter';
 
 export interface CameraConfig {
   minZoom?: number;
@@ -7,6 +9,11 @@ export interface CameraConfig {
   panEnabled?: boolean;
   zoomEnabled?: boolean;
 }
+
+export type CameraState = {
+  scale: number;
+  position: { x: number; y: number };
+};
 
 export class CameraController {
   private worldContainer: Container;
@@ -19,12 +26,12 @@ export class CameraController {
 
   private isPanning = false;
   private lastPanPosition = { x: 0, y: 0 };
-  private lerpFactor = 0.3; // smoothing factor for zoom
+  private lerpFactor = 0.4; // smoothing factor for zoom
 
   private animationFrameId: number | null = null;
 
-  // event emitter if you want to listen to camera changes externally
-  public onUpdate: (() => void) | null = null;
+  public onUpdate = new EventEmitter<CameraState>();
+  public cameraUniforms = new CameraUniforms();
 
   constructor(
     worldContainer: Container,
@@ -42,10 +49,15 @@ export class CameraController {
       zoomEnabled: config.zoomEnabled ?? true,
     };
 
-    this.targetScale = this.worldContainer.scale.x;
+    const scale = this.worldContainer.scale.x;
+    const position = this.worldContainer.position;
+
+    this.cameraUniforms.uniforms.uCameraScale = scale;
+    this.cameraUniforms.uniforms.uCameraPosition = [position.x, position.y];
+    this.targetScale = scale;
     this.targetPosition = {
-      x: this.worldContainer.position.x,
-      y: this.worldContainer.position.y,
+      x: position.x,
+      y: position.y,
     };
 
     this.setupEvents();
@@ -59,16 +71,37 @@ export class CameraController {
     }
   }
 
+  public getState(): CameraState {
+    const pos = this.worldContainer.position;
+    return {
+      scale: this.worldContainer.scale.x,
+      position: { x: pos.x, y: pos.y },
+    };
+  }
+
+  private auxClickHandler = (e: MouseEvent) => {
+    if (e.button === 1 && e.detail === 2) {
+      this.zoomToRect(
+        0,
+        0,
+        this.canvas.width,
+        this.canvas.height,
+        this.canvas.width,
+        this.canvas.height
+      );
+    }
+  };
+
   private setupEvents(): void {
     // prevent default context menu to allow custom right click logic
-    this.canvas.addEventListener('contextmenu', (e: Event) =>
-      e.preventDefault()
-    );
+
+    this.canvas.addEventListener('auxclick', this.auxClickHandler);
 
     this.canvas.addEventListener(
       'pointerdown',
       this.onPointerDown as EventListener
     );
+
     window.addEventListener('pointermove', this.onPointerMove as EventListener);
     window.addEventListener('pointerup', this.onPointerUp as EventListener);
     this.canvas.addEventListener('wheel', this.onWheel as EventListener, {
@@ -81,6 +114,7 @@ export class CameraController {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
+    this.canvas.removeEventListener('auxclick', this.auxClickHandler);
     this.canvas.removeEventListener(
       'pointerdown',
       this.onPointerDown as EventListener
@@ -113,7 +147,12 @@ export class CameraController {
           this.targetPosition.x,
           this.targetPosition.y
         );
-        this.onUpdate?.();
+        this.cameraUniforms.uniforms.uCameraScale = this.targetScale;
+        this.cameraUniforms.uniforms.uCameraPosition = [
+          this.targetPosition.x,
+          this.targetPosition.y,
+        ];
+        this.onUpdate.emit(this.getState());
       }
       return; // stop requesting frames
     }
@@ -128,8 +167,10 @@ export class CameraController {
 
     this.worldContainer.scale.set(nextScale);
     this.worldContainer.position.set(nextX, nextY);
+    this.cameraUniforms.uniforms.uCameraScale = nextScale;
+    this.cameraUniforms.uniforms.uCameraPosition = [nextX, nextY];
 
-    this.onUpdate?.();
+    this.onUpdate.emit(this.getState());
 
     // request next frame to continue animation
     this.animationFrameId = requestAnimationFrame(this.update);
@@ -157,8 +198,13 @@ export class CameraController {
       this.worldContainer.position.x += dx;
       this.worldContainer.position.y += dy;
 
+      this.cameraUniforms.uniforms.uCameraPosition = [
+        this.targetPosition.x,
+        this.targetPosition.y,
+      ];
+
       this.lastPanPosition = { x: e.clientX, y: e.clientY };
-      this.onUpdate?.();
+      this.onUpdate.emit(this.getState());
 
       //this.startAnimationLoop();
     }
@@ -247,10 +293,13 @@ export class CameraController {
     this.startAnimationLoop();
   }
 
-   /**
+  /**
    * converts screen (canvas) coordinates to world coordinates
    */
-  public screenToWorld(screenX: number, screenY: number): { x: number; y: number } {
+  public screenToWorld(
+    screenX: number,
+    screenY: number
+  ): { x: number; y: number } {
     const scale = this.worldContainer.scale.x;
     const pos = this.worldContainer.position;
     return {
@@ -261,12 +310,38 @@ export class CameraController {
   /**
    * converts world coordinates to screen (canvas) coordinates
    */
-  public worldToScreen(worldX: number, worldY: number): { x: number; y: number } {
+  public worldToScreen(
+    worldX: number,
+    worldY: number
+  ): { x: number; y: number } {
     const scale = this.worldContainer.scale.x;
     const pos = this.worldContainer.position;
     return {
       x: worldX * scale + pos.x,
       y: worldY * scale + pos.y,
     };
+  }
+
+  public panBy(dx: number, dy: number, instant: boolean = false): void {
+    this.targetPosition.x += dx;
+    this.targetPosition.y += dy;
+    if (instant) {
+      this.worldContainer.position.x += dx;
+      this.worldContainer.position.y += dy;
+      this.onUpdate.emit(this.getState());
+    } else {
+      this.startAnimationLoop();
+    }
+  }
+
+  public panTo(x: number, y: number, instant: boolean = false): void {
+    if (instant) {
+      this.worldContainer.position.set(x, y);
+      this.onUpdate.emit(this.getState());
+    } else {
+      this.targetPosition.x = x;
+      this.targetPosition.y = y;
+      this.startAnimationLoop();
+    }
   }
 }
