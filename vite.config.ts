@@ -6,5 +6,5 @@ import path from 'path';
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [svelte(), tailwindcss()],
-  resolve: { alias: { $lib: path.resolve('./src/lib') } }
+  resolve: { alias: { $lib: path.resolve('./src/lib') } },
 });

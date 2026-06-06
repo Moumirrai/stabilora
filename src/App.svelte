@@ -9,10 +9,6 @@
 </script>
 
 <!-- <Router {routes} /> -->
-<main>
-  <Tooltip.Provider>
-    <AppPage />
-  </Tooltip.Provider>
-</main>
+<main><Tooltip.Provider><AppPage /></Tooltip.Provider></main>
 
 <style></style>
