@@ -2,7 +2,6 @@ import type { IOperation } from '../IOperation';
 import { internalStore } from '../../stores/model/store'; // (or wherever you keep your internal API)
 import { generateNextNodeName } from '../Helpers';
 import type { Node } from '../../stores/model/model.types';
-import { v4 as uuidv4 } from 'uuid';
 
 export class AddNodeOperation implements IOperation {
   private readonly x: number;
@@ -15,7 +14,7 @@ export class AddNodeOperation implements IOperation {
     this.x = x;
     this.y = y;
     this.name = name;
-    this.id = uuidv4();
+    this.id = crypto.randomUUID();
   }
 
   do(): boolean {
