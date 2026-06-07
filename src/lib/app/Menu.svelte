@@ -5,7 +5,6 @@
   import { Undo, Redo } from '@lucide/svelte';
   import { db } from '../../database/DatabaseManager';
   import * as Tooltip from '$lib/components/ui/tooltip';
-  import { get } from 'svelte/store';
   import { Code } from '@lucide/svelte';
 
   const { canRedo, canUndo } = db;
