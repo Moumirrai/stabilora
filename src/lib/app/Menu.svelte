@@ -5,7 +5,6 @@
   import { Undo, Redo } from '@lucide/svelte';
   import { db } from '../../database/DatabaseManager';
   import * as Tooltip from '$lib/components/ui/tooltip';
-  import { viewportStore } from '../../stores/app/store';
   import { get } from 'svelte/store';
   import { Code } from '@lucide/svelte';
 
@@ -34,7 +33,7 @@
   <Menubar.Menu>
     <Menubar.Trigger class="relative">View</Menubar.Trigger>
     <Menubar.Content>
-      <Menubar.Item onclick={() => get(viewportStore)?.fitInView(0.3)}>
+      <Menubar.Item onclick={() => console.log('Fit in view')}>
         Fit in view
       </Menubar.Item>
     </Menubar.Content>

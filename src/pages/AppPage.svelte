@@ -1,11 +1,8 @@
 <script lang="ts">
-  import { slide } from 'svelte/transition';
-  import Viewport from '../components/ViewportComponent.svelte';
   import Button from '$lib/components/ui/button/button.svelte';
   import StructuralEditor from '../components/StructuralEditor.svelte';
   import Menu from '$lib/app/Menu.svelte';
   import Sidebar from '$lib/app/Sidebar.svelte';
-  import NodeInfoCard from '../components/NodeInfoCard.svelte';
   import { PaneGroup, Pane, Handle } from '$lib/components/ui/resizable';
 
   let showPanel = false;
@@ -28,7 +25,6 @@
             <Pane defaultSize={showPanel ? 70 : 100}>
               <div class="relative overflow-hidden min-w-0 min-h-0 h-full">
                 <StructuralEditor />
-                <NodeInfoCard />
                 <Button
                   onclick={() => (showPanel = !showPanel)}
                   class="absolute bottom-0 right-0 m-2"

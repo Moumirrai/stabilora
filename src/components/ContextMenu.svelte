@@ -1,7 +1,5 @@
 <script lang="ts">
   import * as ContextMenu from '$lib/components/ui/context-menu';
-  import { get } from 'svelte/store';
-  import { viewportStore } from '../stores/app/store';
 
   let { children } = $props();
 </script>
@@ -12,7 +10,7 @@
   </ContextMenu.Trigger>
 
   <ContextMenu.Content class="w-52">
-    <ContextMenu.Item onclick={() => get(viewportStore)?.fitInView(3)}>
+    <ContextMenu.Item onclick={() => console.log('Fit in view')}>
       Fit in View
     </ContextMenu.Item>
     <ContextMenu.Item disabled>

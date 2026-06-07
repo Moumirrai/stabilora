@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Viewport from './ViewportComponent.svelte';
   import PixiViewportComponent from './PixiViewportComponent.svelte';
   import { Button } from '$lib/components/ui/button';
   import * as Card from '$lib/components/ui/card/index.js';
