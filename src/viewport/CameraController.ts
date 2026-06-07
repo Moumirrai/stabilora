@@ -205,8 +205,6 @@ export class CameraController {
 
       this.lastPanPosition = { x: e.clientX, y: e.clientY };
       this.onUpdate.emit(this.getState());
-
-      //this.startAnimationLoop();
     }
   };
 
@@ -323,20 +321,15 @@ export class CameraController {
   }
 
   public panBy(dx: number, dy: number, instant: boolean = false): void {
-    this.targetPosition.x += dx;
-    this.targetPosition.y += dy;
-    if (instant) {
-      this.worldContainer.position.x += dx;
-      this.worldContainer.position.y += dy;
-      this.onUpdate.emit(this.getState());
-    } else {
-      this.startAnimationLoop();
-    }
+    this.panTo(this.targetPosition.x + dx, this.targetPosition.y + dy, instant);
   }
 
   public panTo(x: number, y: number, instant: boolean = false): void {
     if (instant) {
+      this.targetPosition.x = x;
+      this.targetPosition.y = y;
       this.worldContainer.position.set(x, y);
+      this.cameraUniforms.uniforms.uCameraPosition = [x, y];
       this.onUpdate.emit(this.getState());
     } else {
       this.targetPosition.x = x;

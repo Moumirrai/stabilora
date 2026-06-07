@@ -161,7 +161,7 @@ export class ViewportEngine {
       this.app.screen.height,
     ];
 
-    this.requestRender();
+    this.render();
   }
 
   /**
