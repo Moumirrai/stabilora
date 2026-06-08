@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "@lucide/svelte": "^1.17.0",
+    "@stabilora/arcora": "^0.0.2",
     "@types/rbush": "^4.0.0",
     "konva": "^10.3.0",
     "pixi.js": "^8.19.0",

@@ -6,6 +6,7 @@
       "name": "stabilora",
       "dependencies": {
         "@lucide/svelte": "^1.17.0",
+        "@stabilora/arcora": "^0.0.2",
         "@types/rbush": "^4.0.0",
         "konva": "^10.3.0",
         "pixi.js": "^8.19.0",
@@ -111,6 +112,8 @@
     "@rolldown/binding-win32-x64-msvc": ["@rolldown/binding-win32-x64-msvc@1.0.3", "", { "os": "win32", "cpu": "x64" }, "sha512-eXB7CHuaQdqmJcc3koCNtNPmT/bj2gc999kUFgBxG8Ac0NdgXc4rkCHhqrgrhN3zddvvvrgzj1e90SuSfmyIXA=="],
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.1", "", {}, "sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw=="],
+
+    "@stabilora/arcora": ["@stabilora/arcora@0.0.2", "", { "peerDependencies": { "typescript": "^6.0.3" } }, "sha512-A3hTJQaJNCI51bXYT9ed9JC7nn6/ZQjLYtX2rfuvqJ/QPXaj+K2GVWIcKpkexY1lwJyPyXutV4AKW7D2XabNJQ=="],
 
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
 
