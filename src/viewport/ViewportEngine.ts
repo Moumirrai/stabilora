@@ -72,6 +72,7 @@ export class ViewportEngine {
       this.app.screen.width,
       this.app.screen.height,
     ];
+    this.viewportUniforms.uniforms.uResolution = this.app.renderer.resolution;
 
     const initialRect = this.getViewportRect();
     this.grid.position.set(initialRect.x, initialRect.y);
