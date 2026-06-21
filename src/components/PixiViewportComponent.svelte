@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { ViewportEngine } from '../viewport/ViewportEngine';
+  import type { ViewportEngine as ViewportEngineType } from '../viewport/ViewportEngine';
+
+  let { onviewport }: { onviewport?: (viewport: ViewportEngineType) => void } = $props();
 
   let containerRef: HTMLDivElement;
   let engine: ViewportEngine | null = null;
@@ -8,9 +11,7 @@
   onMount(async () => {
     if (containerRef) {
       engine = await ViewportEngine.create(containerRef);
-
-      // additional setup like adding grids or handling stores
-      // can be done here using engine.worldContainer or engine.screenContainer
+      onviewport?.(engine);
     }
   });
 
@@ -27,6 +28,4 @@
     bind:this={containerRef}
     class="absolute inset-0 h-full w-full overflow-hidden"
   ></div>
-
-  <!-- <div class="absolute inset-0 h-full w-full pointer-events-none"></div> -->
 </div>

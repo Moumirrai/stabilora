@@ -5,7 +5,7 @@
   import Sidebar from '$lib/app/Sidebar.svelte';
   import { PaneGroup, Pane, Handle } from '$lib/components/ui/resizable';
 
-  let showPanel = false;
+  let showPanel = $state(false);
 </script>
 
 <div class="h-screen flex flex-col">
@@ -37,7 +37,6 @@
               <Handle />
               <Pane defaultSize={30} minSize={20} maxSize={50}>
                 <div class="border-t p-4 overflow-y-auto h-full">
-                  <!-- Panel content here -->
                   <p>Toggleable Panel</p>
                   <Button onclick={() => (showPanel = false)}
                     >Close Panel</Button

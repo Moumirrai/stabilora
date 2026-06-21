@@ -44,7 +44,7 @@ export class CameraController {
     this.config = {
       minZoom: config.minZoom ?? 0.002,
       maxZoom: config.maxZoom ?? 1000,
-      zoomSpeed: config.zoomSpeed ?? 0.25,
+      zoomSpeed: config.zoomSpeed ?? 1,
       panEnabled: config.panEnabled ?? true,
       zoomEnabled: config.zoomEnabled ?? true,
     };
@@ -61,8 +61,6 @@ export class CameraController {
     };
 
     this.setupEvents();
-    // start loop in case initial position needs smoothing
-    this.startAnimationLoop();
   }
 
   private startAnimationLoop(): void {
@@ -93,8 +91,6 @@ export class CameraController {
   };
 
   private setupEvents(): void {
-    // prevent default context menu to allow custom right click logic
-
     this.canvas.addEventListener('auxclick', this.auxClickHandler);
 
     this.canvas.addEventListener(
@@ -102,8 +98,6 @@ export class CameraController {
       this.onPointerDown as EventListener
     );
 
-    window.addEventListener('pointermove', this.onPointerMove as EventListener);
-    window.addEventListener('pointerup', this.onPointerUp as EventListener);
     this.canvas.addEventListener('wheel', this.onWheel as EventListener, {
       passive: false,
     });
@@ -119,11 +113,6 @@ export class CameraController {
       'pointerdown',
       this.onPointerDown as EventListener
     );
-    window.removeEventListener(
-      'pointermove',
-      this.onPointerMove as EventListener
-    );
-    window.removeEventListener('pointerup', this.onPointerUp as EventListener);
     this.canvas.removeEventListener('wheel', this.onWheel as EventListener);
   }
 
@@ -177,12 +166,13 @@ export class CameraController {
   };
 
   private onPointerDown = (e: PointerEvent): void => {
-    // middle mouse button (1) panning
     if (this.config.panEnabled && e.button === 1) {
       e.preventDefault();
       this.isPanning = true;
       this.lastPanPosition = { x: e.clientX, y: e.clientY };
       this.canvas.style.cursor = 'grabbing';
+      window.addEventListener('pointermove', this.onPointerMove as EventListener);
+      window.addEventListener('pointerup', this.onPointerUp as EventListener);
     }
   };
 
@@ -212,6 +202,8 @@ export class CameraController {
     if (this.isPanning && e.button === 1) {
       this.isPanning = false;
       this.canvas.style.cursor = 'default';
+      window.removeEventListener('pointermove', this.onPointerMove as EventListener);
+      window.removeEventListener('pointerup', this.onPointerUp as EventListener);
     }
   };
 
@@ -234,7 +226,8 @@ export class CameraController {
 
     // calculate new scale
     const direction = e.deltaY > 0 ? -1 : 1;
-    let scaleDelta = this.config.zoomSpeed;
+    let scaleDelta = Math.abs(e.deltaY) * this.config.zoomSpeed * 0.002;
+
     if (e.ctrlKey) scaleDelta *= 0.3; // finer zoom with ctrl
 
     const scaleBy = 1 + scaleDelta;

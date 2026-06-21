@@ -1,4 +1,4 @@
-import { Application, Container, Graphics } from 'pixi.js';
+import { Application, Container, Graphics, Ticker } from 'pixi.js';
 import { CameraController, type CameraConfig } from './CameraController';
 import { DotGridMesh } from './rendering/primitives/DotGridMesh';
 import type { CameraState } from './CameraController';
@@ -121,6 +121,9 @@ export class ViewportEngine {
       autoStart: false, // do not run continuous game-like render loop, render manually reactively
       preference: 'webgl', // Force WebGL for GLSL shader support
     });
+
+    Ticker.system.autoStart = false; //idk but otherwise it runs continuously
+    Ticker.system.stop();
 
     container.appendChild(app.canvas);
 

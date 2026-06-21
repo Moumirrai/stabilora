@@ -1,30 +1,37 @@
 <script lang="ts">
   import { cn } from '$lib/utils.js';
   import { Button } from '$lib/components/ui/button';
-  import {
-    reindexModel,
-    modelStore,
-    spatialIndex,
-  } from '../../stores/model/store';
+  import { app } from '../../app/App';
+  import { Transaction, AddNodeOperation, AddElementOperation } from '@stabilora/arcora';
   import TestComponent from '../../components/TestComponent.svelte';
-  let className: string | null | undefined = undefined;
-  export { className as class };
-  import { db } from '../../database/DatabaseManager';
-  import { Transaction } from '../../database/Transaction';
+
+  let { class: className }: { class?: string } = $props();
 
   function addRandomNode() {
-    const transaction = new Transaction('addRandomNode');
-    const nodeA = transaction.addNode(randomNumber(), randomNumber());
-    const nodeB = transaction.addNode(randomNumber(), randomNumber());
-    //get those two nodes
-    const node1 = transaction.addElement(nodeA, nodeB);
-    //transaction.addNode(randomNumber(), randomNumber());
-    db.commit(transaction);
+    const scene = app.scene;
+    if (!scene) return;
+    const txn = new Transaction('addRandomNode');
+    const nodeA = new AddNodeOperation({ x: randomNumber(), z: randomNumber() });
+    const nodeB = new AddNodeOperation({ x: randomNumber(), z: randomNumber() });
+    txn.addCommand(nodeA);
+    txn.addCommand(nodeB);
+    txn.addCommand(new AddElementOperation({ nodeIDs: [nodeA.id, nodeB.id] }));
+    scene.repository.commit(txn);
+    scene.renderSync();
+  }
+
+  function undo() {
+    app.scene?.repository.undo();
+    app.scene?.renderSync();
+  }
+
+  function redo() {
+    app.scene?.repository.redo();
+    app.scene?.renderSync();
   }
 
   function randomNumber(): number {
-    const randomNumber = Math.floor((Math.random() - 0.5) * 5_000);
-    return randomNumber;
+    return Math.floor((Math.random() - 0.5) * 5_000);
   }
 </script>
 
@@ -35,23 +42,16 @@
       <Button variant="outline" class="w-full" onclick={() => addRandomNode()}>
         Add Random Node
       </Button>
-      <Button variant="outline" class="w-full" onclick={() => db.undo()}>
+      <Button variant="outline" class="w-full" onclick={undo}>
         Undo
       </Button>
-      <Button variant="outline" class="w-full" onclick={() => db.redo()}>
+      <Button variant="outline" class="w-full" onclick={redo}>
         Redo
       </Button>
       <Button
         variant="outline"
         class="w-full"
-        onclick={() => reindexModel($modelStore)}
-      >
-        Reindex
-      </Button>
-      <Button
-        variant="outline"
-        class="w-full"
-        onclick={() => console.log(spatialIndex)}
+        onclick={() => console.log(app.scene?.spatialIndex)}
       >
         Print
       </Button>

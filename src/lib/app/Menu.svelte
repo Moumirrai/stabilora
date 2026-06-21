@@ -2,12 +2,19 @@
   import * as Menubar from '$lib/components/ui/menubar';
   import { Button } from '$lib/components/ui/button';
   import { Separator } from '$lib/components/ui/separator';
-  import { Undo, Redo } from '@lucide/svelte';
-  import { db } from '../../database/DatabaseManager';
+  import { Undo, Redo, Code } from '@lucide/svelte';
+  import { app, canUndo, canRedo } from '../../app/App';
   import * as Tooltip from '$lib/components/ui/tooltip';
-  import { Code } from '@lucide/svelte';
 
-  const { canRedo, canUndo } = db;
+  function undo() {
+    app.scene?.repository.undo();
+    app.scene?.renderSync();
+  }
+
+  function redo() {
+    app.scene?.repository.redo();
+    app.scene?.renderSync();
+  }
 </script>
 
 <Menubar.Root class="rounded-none border-b border-none px-2">
@@ -59,9 +66,7 @@
     <Tooltip.Trigger id="undo_tooltip">
       <Button
         disabled={!$canUndo}
-        onclick={() => {
-          db.undo();
-        }}
+        onclick={undo}
         variant="ghost"
         class="px-2 h-7"><Undo size="16" /></Button
       >
@@ -72,9 +77,7 @@
     <Tooltip.Trigger id="redo_tooltip">
       <Button
         disabled={!$canRedo}
-        onclick={() => {
-          db.redo();
-        }}
+        onclick={redo}
         variant="ghost"
         class="px-2 h-7"
       >
