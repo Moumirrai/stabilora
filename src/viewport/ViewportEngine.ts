@@ -3,6 +3,20 @@ import { CameraController, type CameraConfig } from './CameraController';
 import { DotGridMesh } from './rendering/primitives/DotGridMesh';
 import type { CameraState } from './CameraController';
 import { ViewportUniforms } from './rendering/primitives/ViewportUniforms';
+import { EventEmitter } from '../utils/EventEmitter';
+
+export type ViewportPointerEvent = {
+  type: 'pointerdown' | 'pointermove' | 'pointerup';
+  button: number;
+  screen: { x: number; y: number };
+  world: { x: number; y: number };
+  ctrlKey: boolean;
+  shiftKey: boolean;
+  altKey: boolean;
+  metaKey: boolean;
+  originalEvent: PointerEvent | MouseEvent;
+  doubleClick: boolean;
+};
 
 export class ViewportEngine {
   public app: Application;
@@ -23,6 +37,8 @@ export class ViewportEngine {
   private prevHeight = 0;
 
   public viewportUniforms = new ViewportUniforms();
+
+  public onPointerEvent = new EventEmitter<ViewportPointerEvent>();
 
   private renderPending = false;
 
@@ -57,10 +73,6 @@ export class ViewportEngine {
       this.handleCameraUpdate
     );
 
-    // --- DEBUG SHAPES FOR CAMERA TESTING ---
-    const offsetCircle = new Graphics().circle(200, 200, 50).fill(0x0000ff);
-    this.worldContainer.addChild(offsetCircle);
-
     this.grid = new DotGridMesh(
       this.camera.cameraUniforms,
       this.viewportUniforms
@@ -72,7 +84,7 @@ export class ViewportEngine {
       this.app.screen.width,
       this.app.screen.height,
     ];
-    this.viewportUniforms.uniforms.uResolution = this.app.renderer.resolution;
+    this.viewportUniforms.uniforms.uRes = this.app.renderer.resolution;
 
     const initialRect = this.getViewportRect();
     this.grid.position.set(initialRect.x, initialRect.y);
@@ -80,6 +92,12 @@ export class ViewportEngine {
 
     this.resizeObserver = new ResizeObserver(() => this.handleResize());
     this.resizeObserver.observe(this.container);
+
+    const canvas = this.app.canvas as HTMLCanvasElement;
+    canvas.addEventListener('pointerdown', this.pointerDownHandler);
+    canvas.addEventListener('pointermove', this.pointerMoveHandler);
+    canvas.addEventListener('pointerup', this.pointerUpHandler);
+    canvas.addEventListener('auxclick', this.auxClickHandler);
   }
 
   private handleCameraUpdate = (state: CameraState): void => {
@@ -100,6 +118,65 @@ export class ViewportEngine {
     requestAnimationFrame(() => {
       this.renderPending = false;
       this.render();
+    });
+  }
+
+  private pointerDownHandler = (e: PointerEvent) => {
+    this.emitPointerEvent('pointerdown', e);
+  };
+
+  private pointerMoveHandler = (e: PointerEvent) => {
+    this.emitPointerEvent('pointermove', e);
+  };
+
+  private pointerUpHandler = (e: PointerEvent) => {
+    this.emitPointerEvent('pointerup', e);
+  };
+
+  private auxClickHandler = (e: MouseEvent) => {
+    if (e.button === 1) {
+      const canvas = this.app.canvas as HTMLCanvasElement;
+      const rect = canvas.getBoundingClientRect();
+      const screenX = e.clientX - rect.left;
+      const screenY = e.clientY - rect.top;
+      const world = this.camera.screenToWorld(screenX, screenY);
+
+      this.onPointerEvent.emit({
+        type: 'pointerdown',
+        button: e.button,
+        screen: { x: screenX, y: screenY },
+        world,
+        ctrlKey: e.ctrlKey,
+        shiftKey: e.shiftKey,
+        altKey: e.altKey,
+        metaKey: e.metaKey,
+        originalEvent: e,
+        doubleClick: e.detail === 2,
+      });
+    }
+  };
+
+  private emitPointerEvent(
+    type: ViewportPointerEvent['type'],
+    e: PointerEvent
+  ): void {
+    const canvas = this.app.canvas as HTMLCanvasElement;
+    const rect = canvas.getBoundingClientRect();
+    const screenX = e.clientX - rect.left;
+    const screenY = e.clientY - rect.top;
+    const world = this.camera.screenToWorld(screenX, screenY);
+
+    this.onPointerEvent.emit({
+      type,
+      button: e.button,
+      screen: { x: screenX, y: screenY },
+      world,
+      ctrlKey: e.ctrlKey,
+      shiftKey: e.shiftKey,
+      altKey: e.altKey,
+      metaKey: e.metaKey,
+      originalEvent: e,
+      doubleClick: false,
     });
   }
 
@@ -188,6 +265,12 @@ export class ViewportEngine {
   }
 
   public destroy(): void {
+    const canvas = this.app.canvas as HTMLCanvasElement;
+    canvas.removeEventListener('pointerdown', this.pointerDownHandler);
+    canvas.removeEventListener('pointermove', this.pointerMoveHandler);
+    canvas.removeEventListener('pointerup', this.pointerUpHandler);
+    canvas.removeEventListener('auxclick', this.auxClickHandler);
+
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
     }

@@ -6,14 +6,8 @@
   import { app, canUndo, canRedo } from '../../app/App';
   import * as Tooltip from '$lib/components/ui/tooltip';
 
-  function undo() {
-    app.scene?.repository.undo();
-    app.scene?.renderSync();
-  }
-
-  function redo() {
-    app.scene?.repository.redo();
-    app.scene?.renderSync();
+  function fitInView() {
+    app.scene?.fitInView();
   }
 </script>
 
@@ -39,9 +33,9 @@
   <Menubar.Menu>
     <Menubar.Trigger class="relative">View</Menubar.Trigger>
     <Menubar.Content>
-      <Menubar.Item onclick={() => console.log('Fit in view')}>
-        Fit in view
-      </Menubar.Item>
+      <Menubar.Item onclick={() => app.scene?.fitInView()}
+        >Fit in view</Menubar.Item
+      >
     </Menubar.Content>
   </Menubar.Menu>
   <Menubar.Menu>
@@ -61,12 +55,14 @@
       >
     </Menubar.Content>
   </Menubar.Menu>
-  <Separator orientation="vertical" class="h-[20px]" />
+  <Separator orientation="vertical" class="h-5" />
   <Tooltip.Root delayDuration={0}>
     <Tooltip.Trigger id="undo_tooltip">
       <Button
         disabled={!$canUndo}
-        onclick={undo}
+        onclick={() => {
+          app.scene?.undo();
+        }}
         variant="ghost"
         class="px-2 h-7"><Undo size="16" /></Button
       >
@@ -77,7 +73,9 @@
     <Tooltip.Trigger id="redo_tooltip">
       <Button
         disabled={!$canRedo}
-        onclick={redo}
+        onclick={() => {
+          app.scene?.redo();
+        }}
         variant="ghost"
         class="px-2 h-7"
       >

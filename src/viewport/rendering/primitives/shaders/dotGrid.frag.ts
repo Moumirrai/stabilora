@@ -4,7 +4,7 @@ precision highp float;
 uniform float uCameraScale;
 uniform vec2 uCameraPosition; // worldContainer.position in screen px
 uniform vec2 uStageSize;
-uniform float uResolution;
+uniform float uRes;
 
 const float BASE_SIZE = 100.0;
 const float DOT_RADIUS_PX = 1.5;
@@ -23,7 +23,7 @@ float maskPx(float dPx, float rPx) {
 void main() {
     if (uCameraScale <= 0.001) discard;
 
-    vec2 fragCoordLogical = gl_FragCoord.xy / uResolution;
+    vec2 fragCoordLogical = gl_FragCoord.xy / uRes;
     vec2 screenPos = vec2(fragCoordLogical.x, uStageSize.y - fragCoordLogical.y);
 
     vec2 worldPos = (screenPos - uCameraPosition) / uCameraScale;

@@ -10,6 +10,18 @@ export interface CameraConfig {
   zoomEnabled?: boolean;
 }
 
+type BBox = {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+};
+
+type ZoomOpts = {
+  instant?: boolean;
+  marginPercent?: number;
+};
+
 export type CameraState = {
   scale: number;
   position: { x: number; y: number };
@@ -42,8 +54,8 @@ export class CameraController {
     this.canvas = canvas;
 
     this.config = {
-      minZoom: config.minZoom ?? 0.002,
-      maxZoom: config.maxZoom ?? 1000,
+      minZoom: config.minZoom ?? 0.001,
+      maxZoom: config.maxZoom ?? 200,
       zoomSpeed: config.zoomSpeed ?? 1,
       panEnabled: config.panEnabled ?? true,
       zoomEnabled: config.zoomEnabled ?? true,
@@ -77,30 +89,9 @@ export class CameraController {
     };
   }
 
-  private auxClickHandler = (e: MouseEvent) => {
-    if (e.button === 1 && e.detail === 2) {
-      this.zoomToRect(
-        0,
-        0,
-        this.canvas.width,
-        this.canvas.height,
-        this.canvas.width,
-        this.canvas.height
-      );
-    }
-  };
-
   private setupEvents(): void {
-    this.canvas.addEventListener('auxclick', this.auxClickHandler);
-
-    this.canvas.addEventListener(
-      'pointerdown',
-      this.onPointerDown as EventListener
-    );
-
-    this.canvas.addEventListener('wheel', this.onWheel as EventListener, {
-      passive: false,
-    });
+    this.canvas.addEventListener('pointerdown', this.handlePointerDown);
+    this.canvas.addEventListener('wheel', this.handleWheel, { passive: false });
   }
 
   public destroy(): void {
@@ -108,12 +99,19 @@ export class CameraController {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
-    this.canvas.removeEventListener('auxclick', this.auxClickHandler);
-    this.canvas.removeEventListener(
-      'pointerdown',
-      this.onPointerDown as EventListener
-    );
-    this.canvas.removeEventListener('wheel', this.onWheel as EventListener);
+    this.canvas.removeEventListener('pointerdown', this.handlePointerDown);
+    this.canvas.removeEventListener('wheel', this.handleWheel);
+    if (this.isPanning) {
+      window.removeEventListener(
+        'pointermove',
+        this.handlePointerMove as EventListener
+      );
+      window.removeEventListener(
+        'pointerup',
+        this.handlePointerUp as EventListener
+      );
+      this.isPanning = false;
+    }
   }
 
   private update = (): void => {
@@ -165,18 +163,24 @@ export class CameraController {
     this.animationFrameId = requestAnimationFrame(this.update);
   };
 
-  private onPointerDown = (e: PointerEvent): void => {
+  public handlePointerDown = (e: PointerEvent): void => {
     if (this.config.panEnabled && e.button === 1) {
       e.preventDefault();
       this.isPanning = true;
       this.lastPanPosition = { x: e.clientX, y: e.clientY };
       this.canvas.style.cursor = 'grabbing';
-      window.addEventListener('pointermove', this.onPointerMove as EventListener);
-      window.addEventListener('pointerup', this.onPointerUp as EventListener);
+      window.addEventListener(
+        'pointermove',
+        this.handlePointerMove as EventListener
+      );
+      window.addEventListener(
+        'pointerup',
+        this.handlePointerUp as EventListener
+      );
     }
   };
 
-  private onPointerMove = (e: PointerEvent): void => {
+  private handlePointerMove = (e: PointerEvent): void => {
     if (this.isPanning) {
       const dx = e.clientX - this.lastPanPosition.x;
       const dy = e.clientY - this.lastPanPosition.y;
@@ -198,16 +202,22 @@ export class CameraController {
     }
   };
 
-  private onPointerUp = (e: PointerEvent): void => {
+  private handlePointerUp = (e: PointerEvent): void => {
     if (this.isPanning && e.button === 1) {
       this.isPanning = false;
       this.canvas.style.cursor = 'default';
-      window.removeEventListener('pointermove', this.onPointerMove as EventListener);
-      window.removeEventListener('pointerup', this.onPointerUp as EventListener);
+      window.removeEventListener(
+        'pointermove',
+        this.handlePointerMove as EventListener
+      );
+      window.removeEventListener(
+        'pointerup',
+        this.handlePointerUp as EventListener
+      );
     }
   };
 
-  private onWheel = (e: WheelEvent): void => {
+  public handleWheel = (e: WheelEvent): void => {
     if (!this.config.zoomEnabled) return;
     e.preventDefault();
 
@@ -251,29 +261,40 @@ export class CameraController {
   /**
    * zooms to a specific rectangular area in world coordinates
    */
-  public zoomToRect(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    canvasWidth: number,
-    canvasHeight: number
-  ): void {
+
+  public zoomToRect(bbox: BBox, opts?: ZoomOpts): void {
+    const canvasWidth = this.canvas.clientWidth;
+    const canvasHeight = this.canvas.clientHeight;
+
+    const margin = opts?.marginPercent ?? 0;
+
+    if (margin !== 0) {
+      const width = bbox.maxX - bbox.minX;
+      const height = bbox.maxY - bbox.minY;
+      const b = structuredClone(bbox);
+      bbox.minX = b.minX - width * margin;
+      bbox.minY = b.minY - height * margin;
+      bbox.maxX = b.maxX + width * margin;
+      bbox.maxY = b.maxY + height * margin;
+    }
+
+    const width = Math.max(bbox.maxX - bbox.minX, 1);
+    const height = Math.max(bbox.maxY - bbox.minY, 1);
+
     const scaleX = canvasWidth / width;
     const scaleY = canvasHeight / height;
     let newScale = Math.min(scaleX, scaleY);
 
-    // clamp zoom
     newScale = Math.max(
       this.config.minZoom,
       Math.min(newScale, this.config.maxZoom)
     );
 
-    const boxCenterX = x + width / 2;
-    const boxCenterY = y + height / 2;
+    const boxCenterX = (bbox.minX + bbox.maxX) * 0.5;
+    const boxCenterY = (bbox.minY + bbox.maxY) * 0.5;
 
-    const canvasCenterX = canvasWidth / 2;
-    const canvasCenterY = canvasHeight / 2;
+    const canvasCenterX = canvasWidth * 0.5;
+    const canvasCenterY = canvasHeight * 0.5;
 
     this.targetScale = newScale;
     this.targetPosition = {
@@ -281,7 +302,21 @@ export class CameraController {
       y: canvasCenterY - boxCenterY * newScale,
     };
 
-    this.startAnimationLoop();
+    if (opts?.instant) {
+      this.worldContainer.scale.set(this.targetScale, this.targetScale);
+      this.worldContainer.position.set(
+        this.targetPosition.x,
+        this.targetPosition.y
+      );
+      this.cameraUniforms.uniforms.uCameraPosition = [
+        this.targetPosition.x,
+        this.targetPosition.y,
+      ];
+      this.cameraUniforms.uniforms.uCameraScale = this.targetScale;
+      this.onUpdate.emit(this.getState());
+    } else {
+      this.startAnimationLoop();
+    }
   }
 
   /**

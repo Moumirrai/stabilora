@@ -15,10 +15,7 @@ export class InstancedBeamLineGroup extends Mesh<Geometry, Shader> {
   private endData: Float32Array;
   private beamUniforms: UniformGroup;
 
-  constructor(
-    cameraUniforms: CameraUniforms,
-    style?: Partial<BeamStyle>
-  ) {
+  constructor(cameraUniforms: CameraUniforms, style?: Partial<BeamStyle>) {
     const startData = new Float32Array(0);
     const endData = new Float32Array(0);
 
@@ -35,8 +32,8 @@ export class InstancedBeamLineGroup extends Mesh<Geometry, Shader> {
 
     const beamUniforms = new UniformGroup({
       uBeamThickness: { value: style?.thickness ?? 3.0, type: 'f32' },
-      uBeamDashLength: { value: style?.dashLength ?? 4.0, type: 'f32' },
-      uBeamGapLength: { value: style?.gapLength ?? 3.0, type: 'f32' },
+      uBeamDashLength: { value: style?.dashLength ?? 8.0, type: 'f32' },
+      uBeamGapLength: { value: style?.gapLength ?? 8.0, type: 'f32' },
       uBeamOffset: { value: style?.offset ?? 6.0, type: 'f32' },
     });
 

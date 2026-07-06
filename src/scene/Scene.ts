@@ -1,4 +1,8 @@
-import { Model, ModelRepository, type TransactionChanges } from '@stabilora/arcora';
+import {
+  Model,
+  ModelRepository,
+  type TransactionChanges,
+} from '@stabilora/arcora';
 import { SpatialIndex } from '../spatial/SpatialIndex';
 import { NodeMesh } from '../viewport/rendering/NodeMesh';
 import { InstancedBeamLineGroup } from '../viewport/rendering/primitives/InstancedBeamLineGroup';
@@ -22,19 +26,24 @@ export class Scene {
     this.spatialIndex = new SpatialIndex();
 
     this.nodeMesh = new NodeMesh();
-    this.beamGroup = new InstancedBeamLineGroup(viewport.camera.cameraUniforms, {
-      thickness: 3.0,
-      dashLength: 4.0,
-      gapLength: 3.0,
-      offset: 6.0,
-    });
+    this.beamGroup = new InstancedBeamLineGroup(
+      viewport.camera.cameraUniforms,
+      {
+        thickness: 3.0,
+        dashLength: 8.0,
+        gapLength: 8.0,
+        offset: 6.0,
+      }
+    );
 
     viewport.worldContainer.addChild(this.nodeMesh);
     viewport.worldContainer.addChild(this.beamGroup);
 
-    this.unsubOnChange = this.repository.onChange((changes: TransactionChanges) => {
-      this.spatialIndex.sync(changes, this.model);
-    });
+    this.unsubOnChange = this.repository.onChange(
+      (changes: TransactionChanges) => {
+        this.spatialIndex.sync(changes, this.model);
+      }
+    );
   }
 
   renderSync(): void {
@@ -48,12 +57,49 @@ export class Scene {
       const nodeA = this.model.nodes.get(element.nodeIDs[0]);
       const nodeB = this.model.nodes.get(element.nodeIDs[1]);
       if (!nodeA || !nodeB) continue;
-      this.beamGroup.setBeam(i, nodeA.pos.x, nodeA.pos.z, nodeB.pos.x, nodeB.pos.z);
+      this.beamGroup.setBeam(
+        i,
+        nodeA.pos.x,
+        nodeA.pos.z,
+        nodeB.pos.x,
+        nodeB.pos.z
+      );
       i++;
     }
 
     this.beamGroup.submit(i);
     this.viewport.requestRender();
+  }
+
+  fitInView(instant?: boolean): void {
+    const bbox = this.spatialIndex.boundingBox();
+    if (
+      !bbox ||
+      !isFinite(bbox.maxX - bbox.minX) ||
+      !isFinite(bbox.maxY - bbox.minY)
+    ) {
+      this.viewport.camera.zoomToRect(
+        {
+          minX: -4000,
+          minY: -4000,
+          maxX: 4000,
+          maxY: 4000,
+        },
+        { instant }
+      );
+      return;
+    }
+    this.viewport.camera.zoomToRect(bbox, { marginPercent: 0.08, instant });
+  }
+
+  undo(): void {
+    this.repository.undo();
+    this.renderSync();
+  }
+
+  redo(): void {
+    this.repository.redo();
+    this.renderSync();
   }
 
   destroy(): void {

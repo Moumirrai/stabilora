@@ -7,6 +7,12 @@
   import type { ViewportEngine } from '../viewport/ViewportEngine';
   import { Scene } from '../scene/Scene';
   import { app } from '../app/App';
+  import { onDestroy } from 'svelte';
+  import {
+    Transaction,
+    AddElementOperation,
+    AddNodeOperation,
+  } from '@stabilora/arcora';
 
   let toolbarItems = $state([
     { icon: Dot, action: () => console.log('Select'), active: true },
@@ -17,6 +23,8 @@
     { icon: Trash2, action: () => console.log('Remove'), active: false },
   ]);
 
+  let unsubPointer: (() => void) | null = null;
+
   function toggleActive(index: number) {
     toolbarItems.forEach((item, i) => {
       item.active = i === index;
@@ -24,11 +32,81 @@
     toolbarItems = [...toolbarItems];
   }
 
+  function loadModel() {
+    const scene = app.scene;
+    if (!scene) return;
+    const txn = new Transaction('Load Model');
+    const nodes = [
+      new AddNodeOperation({ x: -6000, z: 0 }),
+      new AddNodeOperation({ x: -2000, z: 0 }),
+      new AddNodeOperation({ x: 2000, z: 0 }),
+      new AddNodeOperation({ x: 6000, z: 0 }),
+      new AddNodeOperation({ x: 4000, z: -3000 }),
+      new AddNodeOperation({ x: 0, z: -3000 }),
+      new AddNodeOperation({ x: -4000, z: -3000 }),
+    ];
+    for (let i = 0; i < nodes.length; i++) {
+      txn.addCommand(nodes[i]);
+    }
+    const elements = [
+      new AddElementOperation({ nodeIDs: [nodes[0].id, nodes[1].id] }),
+      new AddElementOperation({ nodeIDs: [nodes[1].id, nodes[2].id] }),
+      new AddElementOperation({ nodeIDs: [nodes[2].id, nodes[3].id] }),
+      new AddElementOperation({ nodeIDs: [nodes[3].id, nodes[4].id] }),
+      new AddElementOperation({ nodeIDs: [nodes[4].id, nodes[5].id] }),
+      new AddElementOperation({ nodeIDs: [nodes[5].id, nodes[6].id] }),
+      new AddElementOperation({ nodeIDs: [nodes[6].id, nodes[0].id] }),
+      new AddElementOperation({ nodeIDs: [nodes[1].id, nodes[6].id] }),
+      new AddElementOperation({ nodeIDs: [nodes[1].id, nodes[5].id] }),
+      new AddElementOperation({ nodeIDs: [nodes[2].id, nodes[5].id] }),
+      new AddElementOperation({ nodeIDs: [nodes[2].id, nodes[4].id] }),
+    ];
+    for (let i = 0; i < elements.length; i++) {
+      txn.addCommand(elements[i]);
+    }
+    scene.repository.commit(txn);
+    scene.renderSync();
+  }
+
   function handleViewport(viewport: ViewportEngine) {
     const scene = new Scene(viewport);
     app.setScene(scene);
+    loadModel();
     scene.renderSync();
+
+    scene.fitInView(true);
+
+    unsubPointer = viewport.onPointerEvent.subscribe((e) => {
+      if (e.button === 1 && e.type === 'pointerdown' && e.doubleClick) {
+        scene.fitInView(); //on double middle click
+      }
+      if (e.button === 0 && e.type === 'pointerdown') {
+        const scale = viewport.camera.getState().scale;
+        const candidates = scene.spatialIndex.searchNearest(
+          e.world.x,
+          e.world.y,
+          20 / scale // 10px tollerance in screen space
+        );
+        if (candidates.length >= 1) {
+          console.log(candidates);
+          const cd = candidates[0];
+          viewport.camera.zoomToRect(
+            {
+              minX: cd.minX,
+              maxX: cd.maxX,
+              minY: cd.minY,
+              maxY: cd.maxY,
+            },
+            { marginPercent: 0.1 }
+          );
+        }
+      }
+    });
   }
+
+  onDestroy(() => {
+    unsubPointer?.();
+  });
 </script>
 
 <div class="h-full relative">

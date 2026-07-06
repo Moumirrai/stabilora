@@ -2,8 +2,11 @@
   import { cn } from '$lib/utils.js';
   import { Button } from '$lib/components/ui/button';
   import { app } from '../../app/App';
-  import { Transaction, AddNodeOperation, AddElementOperation } from '@stabilora/arcora';
-  import TestComponent from '../../components/TestComponent.svelte';
+  import {
+    Transaction,
+    AddNodeOperation,
+    AddElementOperation,
+  } from '@stabilora/arcora';
 
   let { class: className }: { class?: string } = $props();
 
@@ -11,8 +14,14 @@
     const scene = app.scene;
     if (!scene) return;
     const txn = new Transaction('addRandomNode');
-    const nodeA = new AddNodeOperation({ x: randomNumber(), z: randomNumber() });
-    const nodeB = new AddNodeOperation({ x: randomNumber(), z: randomNumber() });
+    const nodeA = new AddNodeOperation({
+      x: randomNumber(),
+      z: randomNumber(),
+    });
+    const nodeB = new AddNodeOperation({
+      x: randomNumber(),
+      z: randomNumber(),
+    });
     txn.addCommand(nodeA);
     txn.addCommand(nodeB);
     txn.addCommand(new AddElementOperation({ nodeIDs: [nodeA.id, nodeB.id] }));
@@ -42,12 +51,8 @@
       <Button variant="outline" class="w-full" onclick={() => addRandomNode()}>
         Add Random Node
       </Button>
-      <Button variant="outline" class="w-full" onclick={undo}>
-        Undo
-      </Button>
-      <Button variant="outline" class="w-full" onclick={redo}>
-        Redo
-      </Button>
+      <Button variant="outline" class="w-full" onclick={undo}>Undo</Button>
+      <Button variant="outline" class="w-full" onclick={redo}>Redo</Button>
       <Button
         variant="outline"
         class="w-full"
@@ -55,7 +60,6 @@
       >
         Print
       </Button>
-      <TestComponent />
     </div>
   </div>
 </div>

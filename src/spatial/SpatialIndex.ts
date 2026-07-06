@@ -1,13 +1,33 @@
 import RBush from 'rbush';
-import type { Model, TransactionChanges, RepositoryChange } from '@stabilora/arcora';
+import type {
+  Model,
+  TransactionChanges,
+  RepositoryChange,
+} from '@stabilora/arcora';
 import { SpatialItemType, type SpatialItem } from './ISpatialItem';
 
 export class SpatialIndex {
   private tree = new RBush<SpatialItem>();
   private byId = new Map<string, SpatialItem>();
 
-  search(bbox: { minX: number; minY: number; maxX: number; maxY: number }): SpatialItem[] {
+  search(bbox: {
+    minX: number;
+    minY: number;
+    maxX: number;
+    maxY: number;
+  }): SpatialItem[] {
     return this.tree.search(bbox);
+  }
+
+  boundingBox(): { minX: number; minY: number; maxX: number; maxY: number } {
+    const d = (this.tree as RBush<SpatialItem> & { data?: any }).data; // i know its scuffed, but its the simplest way of getting bounding box out of rbush, sice its not exposed by default
+    const bbox = d && {
+      minX: d.minX,
+      minY: d.minY,
+      maxX: d.maxX,
+      maxY: d.maxY,
+    };
+    return bbox;
   }
 
   searchNearest(x: number, y: number, tolerance: number): SpatialItem[] {
@@ -47,7 +67,11 @@ export class SpatialIndex {
     this.byId.clear();
   }
 
-  private insertChange(id: string, change: RepositoryChange, model: Model): void {
+  private insertChange(
+    id: string,
+    change: RepositoryChange,
+    model: Model
+  ): void {
     if (change.kind === 'node') {
       const node = model.nodes.get(id);
       if (!node) return;
@@ -75,7 +99,10 @@ export class SpatialIndex {
   }
 }
 
-function makeNodeItem(node: { id: string; pos: { x: number; z: number } }): SpatialItem {
+function makeNodeItem(node: {
+  id: string;
+  pos: { x: number; z: number };
+}): SpatialItem {
   return {
     minX: node.pos.x,
     minY: node.pos.z,
@@ -89,7 +116,7 @@ function makeNodeItem(node: { id: string; pos: { x: number; z: number } }): Spat
 function makeElementItem(
   _id: string,
   posA: { x: number; z: number },
-  posB: { x: number; z: number },
+  posB: { x: number; z: number }
 ): SpatialItem {
   return {
     minX: Math.min(posA.x, posB.x),
