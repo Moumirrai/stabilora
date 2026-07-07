@@ -10,6 +10,21 @@ export class SpatialIndex {
   private tree = new RBush<SpatialItem>();
   private byId = new Map<string, SpatialItem>();
 
+  searchContained(bbox: {
+    minX: number;
+    minY: number;
+    maxX: number;
+    maxY: number;
+  }): SpatialItem[] {
+    return this.tree.search(bbox).filter(
+      item =>
+        item.minX >= bbox.minX &&
+        item.maxX <= bbox.maxX &&
+        item.minY >= bbox.minY &&
+        item.maxY <= bbox.maxY
+    );
+  }
+
   search(bbox: {
     minX: number;
     minY: number;
