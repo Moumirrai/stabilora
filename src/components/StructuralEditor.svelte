@@ -13,6 +13,7 @@
     AddElementOperation,
     AddNodeOperation,
   } from '@stabilora/arcora';
+  import { SpatialItemType } from '../spatial/ISpatialItem';
 
   let toolbarItems = $state([
     { icon: Dot, action: () => console.log('Select'), active: true },
@@ -77,28 +78,40 @@
     scene.fitInView(true);
 
     unsubPointer = viewport.onPointerEvent.subscribe((e) => {
-      if (e.button === 1 && e.type === 'pointerdown' && e.doubleClick) {
-        scene.fitInView(); //on double middle click
+      const tol = 10 / viewport.camera.getState().scale;
+      const hit = scene.hitTest(e.world.x, e.world.y, tol);
+
+      if (e.button === -1) {
+        console.log('Pointer Move', e.world, hit);
       }
-      if (e.button === 0 && e.type === 'pointerdown') {
-        const scale = viewport.camera.getState().scale;
-        const candidates = scene.spatialIndex.searchNearest(
-          e.world.x,
-          e.world.y,
-          20 / scale // 10px tollerance in screen space
-        );
-        if (candidates.length >= 1) {
-          console.log(candidates);
-          const cd = candidates[0];
+
+      if (e.button === 1 && e.type === 'pointerdown' && e.doubleClick) {
+        scene.fitInView();
+      }
+
+      if (e.button === 0 && e.type === 'pointerdown' && hit) {
+        console.log(hit);
+
+        if (hit.type === SpatialItemType.Node) {
+          const p = hit.node.pos;
           viewport.camera.zoomToRect(
-            {
-              minX: cd.minX,
-              maxX: cd.maxX,
-              minY: cd.minY,
-              maxY: cd.maxY,
-            },
-            { marginPercent: 0.1 }
+            { minX: p.x, maxX: p.x, minY: p.z, maxY: p.z },
+            { marginPercent: 0.1 },
           );
+        } else {
+          const a = scene.model.nodes.get(hit.element.nodeIDs[0]);
+          const b = scene.model.nodes.get(hit.element.nodeIDs[1]);
+          if (a && b) {
+            viewport.camera.zoomToRect(
+              {
+                minX: Math.min(a.pos.x, b.pos.x),
+                maxX: Math.max(a.pos.x, b.pos.x),
+                minY: Math.min(a.pos.z, b.pos.z),
+                maxY: Math.max(a.pos.z, b.pos.z),
+              },
+              { marginPercent: 0.1 },
+            );
+          }
         }
       }
     });

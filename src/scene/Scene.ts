@@ -4,6 +4,7 @@ import {
   type TransactionChanges,
 } from '@stabilora/arcora';
 import { SpatialIndex } from '../spatial/SpatialIndex';
+import { hitTestPrecise, type HitResult } from '../spatial/hitTest';
 import { NodeMesh } from '../viewport/rendering/NodeMesh';
 import { InstancedBeamLineGroup } from '../viewport/rendering/primitives/InstancedBeamLineGroup';
 import type { ViewportEngine } from '../viewport/ViewportEngine';
@@ -90,6 +91,24 @@ export class Scene {
       return;
     }
     this.viewport.camera.zoomToRect(bbox, { marginPercent: 0.08, instant });
+  }
+
+  hitTest(
+    worldX: number,
+    worldZ: number,
+    tolerance: number,
+  ): HitResult | undefined {
+    const candidates = this.spatialIndex.searchNearest(
+      worldX,
+      worldZ,
+      tolerance,
+    );
+    return hitTestPrecise(
+      this.model,
+      candidates,
+      { x: worldX, z: worldZ },
+      tolerance,
+    );
   }
 
   undo(): void {
