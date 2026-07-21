@@ -1,13 +1,8 @@
-import type { Model } from '@stabilora/arcora';
+import type { Model, Element, Node } from '@stabilora/arcora';
 import { SpatialItemType, type SpatialItem } from './ISpatialItem';
 import { distancePoint, distancePointSegment, type Vec2 } from './geometry';
 
-type NodeType = NonNullable<ReturnType<Model['nodes']['get']>>;
-type ElementType = NonNullable<ReturnType<Model['elements']['get']>>;
-
-export type HitResult =
-  | { type: SpatialItemType.Node; node: NodeType }
-  | { type: SpatialItemType.Element; element: ElementType };
+export type HitResult = { type: SpatialItemType; entity: Node | Element };
 
 function hitNode(
   model: Model,
@@ -15,7 +10,7 @@ function hitNode(
   point: Vec2,
   tol: number
 ): HitResult | undefined {
-  let best: NodeType | undefined;
+  let best: Node | undefined;
   let bestDist = tol;
   for (const item of items) {
     const node = model.nodes.get(item.id);
@@ -26,7 +21,7 @@ function hitNode(
       bestDist = dist;
     }
   }
-  return best ? { type: SpatialItemType.Node, node: best } : undefined;
+  return best ? { type: SpatialItemType.Node, entity: best } : undefined;
 }
 
 function hitElement(
@@ -35,7 +30,7 @@ function hitElement(
   point: Vec2,
   tol: number
 ): HitResult | undefined {
-  let best: ElementType | undefined;
+  let best: Element | undefined;
   let bestDist = tol;
   for (const item of items) {
     const element = model.elements.get(item.id);
@@ -49,7 +44,7 @@ function hitElement(
       bestDist = dist;
     }
   }
-  return best ? { type: SpatialItemType.Element, element: best } : undefined;
+  return best ? { type: SpatialItemType.Element, entity: best } : undefined;
 }
 
 export function hitTestPrecise(

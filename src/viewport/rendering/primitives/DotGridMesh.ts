@@ -1,6 +1,6 @@
 import { Mesh, Geometry, Shader, GlProgram, UniformGroup } from 'pixi.js';
-import { dotGridVertexShader } from './shaders/dotGrid.vert';
-import { dotGridFragmentShader } from './shaders/dotGrid.frag';
+import dotGridVertexShader from './shaders/dotGrid.vert.glsl?raw';
+import dotGridFragmentShader from './shaders/dotGrid.frag.glsl?raw';
 import type { CameraUniforms } from './CameraUniforms';
 import type { CameraState } from '../../CameraController';
 import type { ViewportUniforms } from './ViewportUniforms';

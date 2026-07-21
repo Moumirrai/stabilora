@@ -5,9 +5,10 @@ import {
 } from '@stabilora/arcora';
 import { SpatialIndex } from '../spatial/SpatialIndex';
 import { hitTestPrecise, type HitResult } from '../spatial/hitTest';
-import { NodeMesh } from '../viewport/rendering/NodeMesh';
+import { NodeMesh } from '../viewport/rendering/primitives/NodeMesh';
 import { InstancedBeamLineGroup } from '../viewport/rendering/primitives/InstancedBeamLineGroup';
 import type { ViewportEngine } from '../viewport/ViewportEngine';
+import { SelectionController } from './SelectionController';
 
 export class Scene {
   readonly model: Model;
@@ -16,6 +17,7 @@ export class Scene {
 
   readonly nodeMesh: NodeMesh;
   readonly beamGroup: InstancedBeamLineGroup;
+  readonly selection = new SelectionController();
 
   private viewport: ViewportEngine;
   private unsubOnChange: () => void;
@@ -26,7 +28,7 @@ export class Scene {
     this.repository = new ModelRepository(this.model);
     this.spatialIndex = new SpatialIndex();
 
-    this.nodeMesh = new NodeMesh();
+    this.nodeMesh = new NodeMesh(viewport.viewportUniforms);
     this.beamGroup = new InstancedBeamLineGroup(
       viewport.camera.cameraUniforms,
       {
@@ -37,8 +39,8 @@ export class Scene {
       }
     );
 
-    viewport.worldContainer.addChild(this.nodeMesh);
     viewport.worldContainer.addChild(this.beamGroup);
+    viewport.worldContainer.addChild(this.nodeMesh);
 
     this.unsubOnChange = this.repository.onChange(
       (changes: TransactionChanges) => {
@@ -48,15 +50,18 @@ export class Scene {
   }
 
   renderSync(): void {
-    this.nodeMesh.update(this.model);
+    const model = this.model;
 
-    const count = this.model.elements.size;
-    this.beamGroup.prepare(count);
+    this.nodeMesh.update([...model.nodes.values()], (id) =>
+      this.selection.getState(id)
+    );
 
+    const elemArr = [...model.elements.values()];
+    this.beamGroup.prepare(elemArr.length);
     let i = 0;
-    for (const element of this.model.elements.values()) {
-      const nodeA = this.model.nodes.get(element.nodeIDs[0]);
-      const nodeB = this.model.nodes.get(element.nodeIDs[1]);
+    for (const element of elemArr) {
+      const nodeA = model.nodes.get(element.nodeIDs[0]);
+      const nodeB = model.nodes.get(element.nodeIDs[1]);
       if (!nodeA || !nodeB) continue;
       this.beamGroup.setBeam(
         i,
@@ -65,6 +70,7 @@ export class Scene {
         nodeB.pos.x,
         nodeB.pos.z
       );
+      this.beamGroup.setBeamState(i, this.selection.getState(element.id));
       i++;
     }
 
@@ -96,18 +102,18 @@ export class Scene {
   hitTest(
     worldX: number,
     worldZ: number,
-    tolerance: number,
+    tolerance: number
   ): HitResult | undefined {
     const candidates = this.spatialIndex.searchNearest(
       worldX,
       worldZ,
-      tolerance,
+      tolerance
     );
     return hitTestPrecise(
       this.model,
       candidates,
       { x: worldX, z: worldZ },
-      tolerance,
+      tolerance
     );
   }
 

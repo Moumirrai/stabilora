@@ -1,4 +1,4 @@
-export const dotGridVertexShader = `
+#version 300 es
 precision highp float;
 
 in vec2 aPosition;
@@ -16,4 +16,3 @@ void main() {
     vec3 clip = uProjectionMatrix * uWorldTransformMatrix * localWorld;
     gl_Position = vec4(clip.xy, 0.0, 1.0);
 }
-`;

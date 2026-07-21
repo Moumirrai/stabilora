@@ -1,7 +1,7 @@
 import { Mesh, Geometry, Shader, GlProgram, UniformGroup } from 'pixi.js';
 import type { CameraUniforms } from './CameraUniforms';
-import { beamVertexShader } from './shaders/beam.vert';
-import { beamFragmentShader } from './shaders/beam.frag';
+import beamVertexShader from './shaders/beam.vert.glsl?raw';
+import beamFragmentShader from './shaders/beam.frag.glsl?raw';
 
 export interface BeamStyle {
   thickness: number;
@@ -13,11 +13,13 @@ export interface BeamStyle {
 export class InstancedBeamLineGroup extends Mesh<Geometry, Shader> {
   private startData: Float32Array;
   private endData: Float32Array;
+  private stateData: Float32Array;
   private beamUniforms: UniformGroup;
 
   constructor(cameraUniforms: CameraUniforms, style?: Partial<BeamStyle>) {
     const startData = new Float32Array(0);
     const endData = new Float32Array(0);
+    const stateData = new Float32Array(0);
 
     const geometry = new Geometry();
     geometry.addAttribute('aExtrude', [-1, -1, -1, 1, 1, -1, 1, 1]);
@@ -28,6 +30,7 @@ export class InstancedBeamLineGroup extends Mesh<Geometry, Shader> {
       size: 2,
     });
     geometry.addAttribute('aEnd', { buffer: endData, instance: true, size: 2 });
+    geometry.addAttribute('aState', { buffer: stateData, instance: true, size: 1 });
     geometry.instanceCount = 0;
 
     const beamUniforms = new UniformGroup({
@@ -35,6 +38,9 @@ export class InstancedBeamLineGroup extends Mesh<Geometry, Shader> {
       uBeamDashLength: { value: style?.dashLength ?? 8.0, type: 'f32' },
       uBeamGapLength: { value: style?.gapLength ?? 8.0, type: 'f32' },
       uBeamOffset: { value: style?.offset ?? 6.0, type: 'f32' },
+      uSelectColor: { value: [1.0, 0.8, 0.0], type: 'vec3<f32>' },
+      uGlowColor: { value: [1.0, 0.85, 0.0], type: 'vec3<f32>' },
+      uGhostAlpha: { value: 0.35, type: 'f32' },
     });
 
     const glProgram = GlProgram.from({
@@ -54,6 +60,7 @@ export class InstancedBeamLineGroup extends Mesh<Geometry, Shader> {
 
     this.startData = startData;
     this.endData = endData;
+    this.stateData = stateData;
     this.beamUniforms = beamUniforms;
   }
 
@@ -69,8 +76,10 @@ export class InstancedBeamLineGroup extends Mesh<Geometry, Shader> {
     if (this.startData.length >= needed) return;
     this.startData = new Float32Array(needed);
     this.endData = new Float32Array(needed);
+    this.stateData = new Float32Array(count);
     this.geometry.getBuffer('aStart').data = this.startData;
     this.geometry.getBuffer('aEnd').data = this.endData;
+    this.geometry.getBuffer('aState').data = this.stateData;
   }
 
   setBeam(index: number, sx: number, sy: number, ex: number, ey: number): void {
@@ -80,10 +89,15 @@ export class InstancedBeamLineGroup extends Mesh<Geometry, Shader> {
     this.endData[index * 2 + 1] = ey;
   }
 
+  setBeamState(index: number, state: number): void {
+    this.stateData[index] = state;
+  }
+
   submit(count: number): void {
     this.geometry.instanceCount = count;
     this.geometry.getBuffer('aStart').update();
     this.geometry.getBuffer('aEnd').update();
+    this.geometry.getBuffer('aState').update();
   }
 
   protected _calculateBounds() {

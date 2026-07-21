@@ -25,6 +25,7 @@
   ]);
 
   let unsubPointer: (() => void) | null = null;
+  let unsubSelection: (() => void) | null = null;
 
   function toggleActive(index: number) {
     toolbarItems.forEach((item, i) => {
@@ -77,41 +78,32 @@
 
     scene.fitInView(true);
 
+    const sel = scene.selection;
+    unsubSelection = sel.onChange(() => scene.renderSync());
+
     unsubPointer = viewport.onPointerEvent.subscribe((e) => {
       const tol = 10 / viewport.camera.getState().scale;
       const hit = scene.hitTest(e.world.x, e.world.y, tol);
 
-      if (e.button === -1) {
-        console.log('Pointer Move', e.world, hit);
+      if (e.type === 'pointermove') {
+        sel.setHovered(hit?.entity ?? null);
       }
 
       if (e.button === 1 && e.type === 'pointerdown' && e.doubleClick) {
         scene.fitInView();
       }
 
-      if (e.button === 0 && e.type === 'pointerdown' && hit) {
-        console.log(hit);
-
-        if (hit.type === SpatialItemType.Node) {
-          const p = hit.node.pos;
-          viewport.camera.zoomToRect(
-            { minX: p.x, maxX: p.x, minY: p.z, maxY: p.z },
-            { marginPercent: 0.1 },
-          );
-        } else {
-          const a = scene.model.nodes.get(hit.element.nodeIDs[0]);
-          const b = scene.model.nodes.get(hit.element.nodeIDs[1]);
-          if (a && b) {
-            viewport.camera.zoomToRect(
-              {
-                minX: Math.min(a.pos.x, b.pos.x),
-                maxX: Math.max(a.pos.x, b.pos.x),
-                minY: Math.min(a.pos.z, b.pos.z),
-                maxY: Math.max(a.pos.z, b.pos.z),
-              },
-              { marginPercent: 0.1 },
-            );
+      if (e.button === 0 && e.type === 'pointerdown') {
+        if (hit) {
+          if (e.ctrlKey) {
+            sel.selectAdd(hit.entity);
+          } else if (e.shiftKey) {
+            sel.selectRemove(hit.entity);
+          } else {
+            sel.selectOnly(hit.entity);
           }
+        } else {
+          if (!e.ctrlKey && !e.shiftKey) sel.clearSelection();
         }
       }
     });
@@ -119,6 +111,7 @@
 
   onDestroy(() => {
     unsubPointer?.();
+    unsubSelection?.();
   });
 </script>
 

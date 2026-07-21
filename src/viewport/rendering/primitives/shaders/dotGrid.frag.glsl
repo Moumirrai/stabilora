@@ -1,10 +1,12 @@
-export const dotGridFragmentShader = `
+#version 300 es
 precision highp float;
 
 uniform float uCameraScale;
 uniform vec2 uCameraPosition; // worldContainer.position in screen px
 uniform vec2 uStageSize;
 uniform float uRes;
+
+out vec4 fragColor;
 
 const float BASE_SIZE = 100.0;
 const float DOT_RADIUS_PX = 1.5;
@@ -50,6 +52,5 @@ void main() {
     color = mix(color, ORIGIN_COLOR, originMask);
 
     if (color.a < 0.01) discard;
-    gl_FragColor = color;
+    fragColor = color;
 }
-`;

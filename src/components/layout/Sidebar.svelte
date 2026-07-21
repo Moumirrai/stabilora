@@ -3,9 +3,14 @@
   import { Button } from '$lib/components/ui/button';
   import { app } from '../../app/App';
   import {
+    Node,
+    Element,
     Transaction,
     AddNodeOperation,
     AddElementOperation,
+    RemoveElementOperation,
+    RemoveNodeOperation,
+    add
   } from '@stabilora/arcora';
 
   let { class: className }: { class?: string } = $props();
@@ -26,6 +31,22 @@
     txn.addCommand(nodeB);
     txn.addCommand(new AddElementOperation({ nodeIDs: [nodeA.id, nodeB.id] }));
     scene.repository.commit(txn);
+    scene.renderSync();
+  }
+
+  function deleteSelected() {
+    const scene = app.scene;
+    if (!scene) return;
+    const txn = new Transaction('Delete selection');
+    for (const entity of scene.selection.selected.values()) {
+      if (entity instanceof Node) {
+        txn.addCommand(new RemoveNodeOperation(entity.id));
+      } else {
+        txn.addCommand(new RemoveElementOperation(entity.id));
+      }
+    }
+    scene.repository.commit(txn);
+    scene.selection.clearSelection();
     scene.renderSync();
   }
 
@@ -59,6 +80,20 @@
         onclick={() => console.log(app.scene?.spatialIndex)}
       >
         Print
+      </Button>
+      <Button
+        variant="outline"
+        class="w-full"
+        onclick={() => deleteSelected()}
+      >
+        Delete selected
+      </Button>
+      <Button
+        variant="outline"
+        class="w-full"
+        onclick={() => console.log(add(5, 8))}
+      >
+        Test WASM
       </Button>
     </div>
   </div>
