@@ -16,6 +16,19 @@
 	}
 }
 
+*::selection {
+  background: #be9800;
+  color: #000;
+}
+*::-moz-selection {
+  background: #be9800;
+  color: #000;
+}
+*::-webkit-selection {
+  background: #be9800;
+  color: #000;
+}
+
 :root {
 	--background: oklch(1 0 0);
 	--foreground: oklch(0.145 0 0);

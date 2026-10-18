@@ -12,8 +12,12 @@
     Transaction,
     AddElementOperation,
     AddNodeOperation,
+    Material,
+    Crossection,
+    LoadCase,
+    LoadCaseType,
+    NodalLoad
   } from '@stabilora/arcora';
-  import { SpatialItemType } from '../spatial/ISpatialItem';
 
   let toolbarItems = $state([
     { icon: Dot, action: () => console.log('Select'), active: true },
@@ -36,7 +40,30 @@
 
   function loadModel() {
     const scene = app.scene;
+    const model = scene?.model;
+    if (!model) return;
     if (!scene) return;
+
+    const material = new Material(model, {
+      E: 210e9,
+      G: 81e9,
+      alpha: 1.2e-5,
+      density: 7850,
+    });
+    model.materials.set(material.id, material);
+    const xs = new Crossection(model, {
+      area: 0.02,
+      Iy: 8.33e-5,
+      Iz: 8.33e-5,
+    });
+    model.crossections.set(xs.id, xs);
+    const lc = new LoadCase(model, {
+      name: 'Test Load Case',
+      type: LoadCaseType.Live,
+      selfWeight: false,
+    });
+    model.loadCases.set(lc.id, lc);
+
     const txn = new Transaction('Load Model');
     const nodes = [
       new AddNodeOperation({ x: -6000, z: 0 }),
@@ -51,21 +78,43 @@
       txn.addCommand(nodes[i]);
     }
     const elements = [
-      new AddElementOperation({ nodeIDs: [nodes[0].id, nodes[1].id] }),
-      new AddElementOperation({ nodeIDs: [nodes[1].id, nodes[2].id] }),
-      new AddElementOperation({ nodeIDs: [nodes[2].id, nodes[3].id] }),
-      new AddElementOperation({ nodeIDs: [nodes[3].id, nodes[4].id] }),
-      new AddElementOperation({ nodeIDs: [nodes[4].id, nodes[5].id] }),
-      new AddElementOperation({ nodeIDs: [nodes[5].id, nodes[6].id] }),
-      new AddElementOperation({ nodeIDs: [nodes[6].id, nodes[0].id] }),
-      new AddElementOperation({ nodeIDs: [nodes[1].id, nodes[6].id] }),
-      new AddElementOperation({ nodeIDs: [nodes[1].id, nodes[5].id] }),
-      new AddElementOperation({ nodeIDs: [nodes[2].id, nodes[5].id] }),
-      new AddElementOperation({ nodeIDs: [nodes[2].id, nodes[4].id] }),
+      new AddElementOperation({ nodeIDs: [nodes[0].id, nodes[1].id], crossectionID: xs.id, materialID: material.id }),
+      new AddElementOperation({ nodeIDs: [nodes[1].id, nodes[2].id], crossectionID: xs.id, materialID: material.id }),
+      new AddElementOperation({ nodeIDs: [nodes[2].id, nodes[3].id], crossectionID: xs.id, materialID: material.id }),
+      new AddElementOperation({ nodeIDs: [nodes[3].id, nodes[4].id], crossectionID: xs.id, materialID: material.id }),
+      new AddElementOperation({ nodeIDs: [nodes[4].id, nodes[5].id], crossectionID: xs.id, materialID: material.id }),
+      new AddElementOperation({ nodeIDs: [nodes[5].id, nodes[6].id], crossectionID: xs.id, materialID: material.id }),
+      new AddElementOperation({ nodeIDs: [nodes[6].id, nodes[0].id], crossectionID: xs.id, materialID: material.id }),
+      new AddElementOperation({ nodeIDs: [nodes[1].id, nodes[6].id], crossectionID: xs.id, materialID: material.id }),
+      new AddElementOperation({ nodeIDs: [nodes[1].id, nodes[5].id], crossectionID: xs.id, materialID: material.id }),
+      new AddElementOperation({ nodeIDs: [nodes[2].id, nodes[5].id], crossectionID: xs.id, materialID: material.id }),
+      new AddElementOperation({ nodeIDs: [nodes[2].id, nodes[4].id], crossectionID: xs.id, materialID: material.id }),
     ];
     for (let i = 0; i < elements.length; i++) {
       txn.addCommand(elements[i]);
     }
+
+    model.boundaryConditions.set(nodes[0].id, {
+      nodeId: nodes[0].id,
+      rotation: 0,
+      dirichlet: { 0: 0, 1: 0, 2: 0 },
+    });
+
+    model.boundaryConditions.set(nodes[3].id, {
+      nodeId: nodes[3].id,
+      rotation: 0,
+      dirichlet: { 0: 0, 1: 0, 2: 0 },
+    });
+
+    const load = new NodalLoad(model, {
+      nodeID: nodes[5].id,
+      loadCaseID: lc.id,
+      Fx: 25000,
+      Fy: 0,
+      Mz: 0,
+    });
+    model.loads.set(load.id, load);
+
     scene.repository.commit(txn);
     scene.renderSync();
   }

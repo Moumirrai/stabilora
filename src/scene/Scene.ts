@@ -1,6 +1,7 @@
 import {
   Model,
   ModelRepository,
+  Solver,
   type TransactionChanges,
 } from '@stabilora/arcora';
 import { SpatialIndex } from '../spatial/SpatialIndex';
@@ -12,6 +13,7 @@ import { SelectionController } from './SelectionController';
 
 export class Scene {
   readonly model: Model;
+  readonly solver: Solver;
   readonly repository: ModelRepository;
   readonly spatialIndex: SpatialIndex;
 
@@ -25,6 +27,7 @@ export class Scene {
   constructor(viewport: ViewportEngine) {
     this.viewport = viewport;
     this.model = new Model();
+    this.solver = new Solver(this.model);
     this.repository = new ModelRepository(this.model);
     this.spatialIndex = new SpatialIndex();
 
