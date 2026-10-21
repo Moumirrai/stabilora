@@ -8,8 +8,10 @@ import { SpatialIndex } from '../spatial/SpatialIndex';
 import { hitTestPrecise, type HitResult } from '../spatial/hitTest';
 import { NodeMesh } from '../viewport/rendering/primitives/NodeMesh';
 import { InstancedBeamLineGroup } from '../viewport/rendering/primitives/InstancedBeamLineGroup';
+import { SupportMesh } from '../viewport/rendering/primitives/SupportMesh';
 import type { ViewportEngine } from '../viewport/ViewportEngine';
 import { SelectionController } from './SelectionController';
+import { collectSupportInstances } from './supports/collectSupports';
 
 export class Scene {
   readonly model: Model;
@@ -19,6 +21,7 @@ export class Scene {
 
   readonly nodeMesh: NodeMesh;
   readonly beamGroup: InstancedBeamLineGroup;
+  private readonly supportMesh: SupportMesh;
   readonly selection = new SelectionController();
 
   private viewport: ViewportEngine;
@@ -41,8 +44,10 @@ export class Scene {
         offset: 6.0,
       }
     );
+    this.supportMesh = new SupportMesh(viewport.camera.cameraUniforms);
 
     viewport.worldContainer.addChild(this.beamGroup);
+    viewport.worldContainer.addChild(this.supportMesh);
     viewport.worldContainer.addChild(this.nodeMesh);
 
     this.unsubOnChange = this.repository.onChange(
@@ -53,6 +58,18 @@ export class Scene {
   }
 
   renderSync(): void {
+    this.renderSceneGeometry();
+    this.renderSupports();
+    this.viewport.requestRender();
+  }
+
+  // Supports are not selection-aware. If that changes, this path must rebuild them.
+  renderSelection(): void {
+    this.renderSceneGeometry();
+    this.viewport.requestRender();
+  }
+
+  private renderSceneGeometry(): void {
     const model = this.model;
 
     this.nodeMesh.update([...model.nodes.values()], (id) =>
@@ -78,6 +95,14 @@ export class Scene {
     }
 
     this.beamGroup.submit(i);
+  }
+
+  private renderSupports(): void {
+    this.supportMesh.update(collectSupportInstances(this.model));
+  }
+
+  setSupportSize(size: number): void {
+    this.supportMesh.setSize(size);
     this.viewport.requestRender();
   }
 
@@ -134,5 +159,6 @@ export class Scene {
     this.unsubOnChange();
     this.nodeMesh.destroy();
     this.beamGroup.destroy();
+    this.supportMesh.destroy();
   }
 }

@@ -87,7 +87,7 @@ void main() {
 
     if (outAlpha <= 0.0) discard;
 
-    if (ghost) outAlpha *= uGhostAlpha;
+    if (ghost) { outAlpha *= uGhostAlpha; outColor *= uGhostAlpha; }
 
     fragColor = vec4(outColor, outAlpha);
 }

@@ -1,8 +1,13 @@
 <script lang="ts">
   import { cn } from '$lib/utils.js';
   import { Button } from '$lib/components/ui/button';
-  import { NumericalInput, NumericalInputGroup, NumericalInputGroupLabel } from '$lib/components/ui/numerical-input';
+  import {
+    NumericalInput,
+    NumericalInputGroup,
+    NumericalInputGroupLabel,
+  } from '$lib/components/ui/numerical-input';
   import { app } from '../../app/App';
+  import { DEFAULT_SUPPORT_SIZE } from '../../viewport/rendering/primitives/supportStyle';
   import {
     Node,
     Element,
@@ -10,7 +15,7 @@
     AddNodeOperation,
     AddElementOperation,
     RemoveElementOperation,
-    RemoveNodeOperation
+    RemoveNodeOperation,
   } from '@stabilora/arcora';
 
   let { class: className }: { class?: string } = $props();
@@ -31,7 +36,13 @@
     });
     txn.addCommand(nodeA);
     txn.addCommand(nodeB);
-    txn.addCommand(new AddElementOperation({ nodeIDs: [nodeA.id, nodeB.id], materialID: dM.id, crossectionID: dXS.id }));
+    txn.addCommand(
+      new AddElementOperation({
+        nodeIDs: [nodeA.id, nodeB.id],
+        materialID: dM.id,
+        crossectionID: dXS.id,
+      })
+    );
     scene.repository.commit(txn);
     scene.renderSync();
   }
@@ -83,6 +94,12 @@
   let step = $state(0.1);
   let x = $state(0);
   let y = $state(0);
+
+  let supportSize = $state(DEFAULT_SUPPORT_SIZE);
+
+  function handleSupportSize(value: number) {
+    app.scene?.setSupportSize(value);
+  }
 </script>
 
 <div class={cn('pb-12', className)}>
@@ -101,18 +118,10 @@
       >
         Print
       </Button>
-      <Button
-        variant="outline"
-        class="w-full"
-        onclick={() => deleteSelected()}
-      >
+      <Button variant="outline" class="w-full" onclick={() => deleteSelected()}>
         Delete selected
       </Button>
-      <Button
-        variant="outline"
-        class="w-full"
-        onclick={() => slv()}
-      >
+      <Button variant="outline" class="w-full" onclick={() => slv()}>
         Solve
       </Button>
 
@@ -135,7 +144,7 @@
         </p>
         <NumericalInputGroup>
           <NumericalInput bind:value={x} step={0.1} prefix="X = " />
-          <NumericalInput bind:value={y} step={0.1} prefix="Y = "/>
+          <NumericalInput bind:value={y} step={0.1} prefix="Y = " />
         </NumericalInputGroup>
 
         <p class="pt-2 text-xs font-medium text-muted-foreground">
@@ -144,13 +153,32 @@
         <NumericalInputGroup orientation="vertical" class="w-full">
           <NumericalInputGroupLabel>
             <span class="truncate">Length</span>
-            <NumericalInput bind:value={span} step={0.1} suffix=" m"  precision={2}/>
+            <NumericalInput
+              bind:value={span}
+              step={0.1}
+              suffix=" m"
+              precision={2}
+            />
           </NumericalInputGroupLabel>
           <NumericalInputGroupLabel>
             <span class="truncate">Coefficient</span>
             <NumericalInput bind:value={step} step={0.1} />
           </NumericalInputGroupLabel>
         </NumericalInputGroup>
+
+        <div class="space-y-2 pt-4">
+          <p class="text-xs font-medium text-muted-foreground">Support size</p>
+          <NumericalInput
+            bind:value={supportSize}
+            min={20}
+            max={60}
+            step={1}
+            dragStep={1}
+            precision={0}
+            suffix=" px"
+            onchange={handleSupportSize}
+          />
+        </div>
       </div>
     </div>
   </div>
