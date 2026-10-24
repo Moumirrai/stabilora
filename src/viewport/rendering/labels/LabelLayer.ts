@@ -56,6 +56,12 @@ export class LabelLayer {
     this.viewport.requestRender();
   }
 
+  setChannelVisible(channel: number, visible: boolean): void {
+    // static: immediate, stream: next pass
+    this.system.setChannelVisible(channel, visible);
+    this.viewport.requestRender();
+  }
+
   requestRender(): void {
     this.viewport.requestRender();
   }

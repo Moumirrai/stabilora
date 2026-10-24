@@ -59,6 +59,7 @@ export function buildFrame(bays: number, storeys: number): Transaction {
       const n = new AddNodeOperation({
         x: i * BAY_L,
         z: j * -STOREY_H,
+        name: `${j * (bays + 1) + i}`,
       });
       ts.addCommand(n);
       row.push(n.id);

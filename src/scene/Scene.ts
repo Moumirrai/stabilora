@@ -10,11 +10,11 @@ import { NodeMesh } from '../viewport/rendering/primitives/NodeMesh';
 import { InstancedBeamLineGroup } from '../viewport/rendering/primitives/InstancedBeamLineGroup';
 import { SupportMesh } from '../viewport/rendering/primitives/SupportMesh';
 import type { ViewportEngine } from '../viewport/ViewportEngine';
-import type { DebugLabels } from '../examples/DebugLabels';
 import {
   LabelLayer,
   type LabelLayerOptions,
 } from '../viewport/rendering/labels/LabelLayer';
+import { NodeLabels } from './NodeLabels';
 import { SelectionController } from './SelectionController';
 import { collectSupportInstances } from './supports/collectSupports';
 
@@ -34,9 +34,7 @@ export class Scene {
   readonly selection = new SelectionController();
 
   readonly labels: LabelLayer;
-
-  /** Demo overlay handle; set by the editor, cleared on teardown. */
-  debugLabels: DebugLabels | null = null;
+  readonly nodeLabels: NodeLabels;
 
   private viewport: ViewportEngine;
   private unsubOnChange: () => void;
@@ -74,11 +72,14 @@ export class Scene {
     viewport.worldContainer.addChild(this.supportMesh);
     viewport.worldContainer.addChild(this.nodeMesh);
 
+    this.nodeLabels = new NodeLabels(this.model, this.labels);
     this.unsubOnChange = this.repository.onChange(
       (changes: TransactionChanges) => {
         this.spatialIndex.sync(changes, this.model);
+        this.nodeLabels.sync(changes);
       }
     );
+    this.nodeLabels.syncAll();
   }
 
   renderSync(): void {
@@ -130,10 +131,13 @@ export class Scene {
     this.viewport.requestRender();
   }
 
-  /** Load the font and attach the label layer; safe to call once. */
   /** Set the font size for a label channel (default 0). */
   setLabelSize(px: number, channel = 0): void {
     this.labels.setChannelFontSizePx(channel, px);
+  }
+
+  setChannelVisible(channel: number, visible: boolean): void {
+    this.labels.setChannelVisible(channel, visible);
   }
 
   fitInView(instant?: boolean): void {
@@ -186,9 +190,8 @@ export class Scene {
   }
 
   destroy(): void {
-    this.debugLabels?.dispose();
-    this.debugLabels = null;
     this.unsubOnChange();
+    this.nodeLabels.dispose();
     this.labels.dispose();
     this.nodeMesh.destroy();
     this.beamGroup.destroy();

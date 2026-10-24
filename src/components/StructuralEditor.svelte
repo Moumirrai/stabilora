@@ -5,7 +5,6 @@
   import { Plus, Square, Trash2, Triangle, Dot, Minus } from '@lucide/svelte';
   import ContextMenu from './ContextMenu.svelte';
   import type { ViewportEngine } from '../viewport/ViewportEngine';
-  import { createDebugLabels } from '../examples/DebugLabels';
   import { Scene } from '../scene/Scene';
   import { app } from '../app/App';
   import { buildFrame } from '../utils/DemoFrame';
@@ -35,8 +34,6 @@
   async function handleViewport(viewport: ViewportEngine): Promise<() => void> {
     // font load is cached; overlay gates until the scene is ready
     const scene = await Scene.create(viewport);
-    const debugLabels = createDebugLabels(scene.labels);
-    scene.debugLabels = debugLabels;
     app.setScene(scene);
     loadModel();
     scene.renderSync();

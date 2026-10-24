@@ -7,8 +7,10 @@
     NumericalInputGroupLabel,
   } from '$lib/components/ui/numerical-input';
   import { app } from '../../app/App';
+  import { Checkbox } from '$lib/components/ui/checkbox';
   import { DEFAULT_SUPPORT_SIZE } from '../../viewport/rendering/primitives/supportStyle';
   import { DEFAULT_LABEL_FONT_SIZE_PX } from '../../viewport/rendering/labels/labelSystem';
+  import { NODE_LABEL_CHANNEL } from '../../scene/NodeLabels';
   import {
     Node,
     Element,
@@ -102,25 +104,16 @@
     app.scene?.setSupportSize(value);
   }
 
-  let labelSize = $state(DEFAULT_LABEL_FONT_SIZE_PX);
-  let dynamicLabelSize = $state(DEFAULT_LABEL_FONT_SIZE_PX);
-  let dynamicLabelValue = $state(0);
-  let staticLabelValue = $state(0);
+  let nodeLabelSize = $state(DEFAULT_LABEL_FONT_SIZE_PX);
+  let nodeLabelsVisible = $state(true);
 
-  function handleLabelSize(value: number) {
-    app.scene?.setLabelSize(value);
+  function handleNodeLabelSize(value: number) {
+    app.scene?.setLabelSize(value, NODE_LABEL_CHANNEL);
   }
 
-  function handleDynamicLabelSize(value: number) {
-    app.scene?.setLabelSize(value, 1);
-  }
-
-  function handleDynamicLabelValue(value: number) {
-    app.scene?.debugLabels?.setResult(String(value));
-  }
-
-  function handleStaticLabelValue(value: number) {
-    app.scene?.debugLabels?.setStaticText(String(value));
+  function handleNodeLabelsVisible(visible: boolean) {
+    nodeLabelsVisible = visible;
+    app.scene?.setChannelVisible(NODE_LABEL_CHANNEL, visible);
   }
 </script>
 
@@ -204,60 +197,28 @@
 
         <div class="space-y-2 pt-2">
           <p class="text-xs font-medium text-muted-foreground">
-            Label size (channel 0)
+            Node label size
           </p>
           <NumericalInput
-            bind:value={labelSize}
+            bind:value={nodeLabelSize}
             min={6}
             max={48}
             step={1}
             dragStep={1}
             precision={0}
             suffix=" px"
-            onchange={handleLabelSize}
+            onchange={handleNodeLabelSize}
           />
         </div>
 
-        <div class="space-y-2 pt-2">
-          <p class="text-xs font-medium text-muted-foreground">
-            Dynamic label size (channel 1)
-          </p>
-          <NumericalInput
-            bind:value={dynamicLabelSize}
-            min={6}
-            max={48}
-            step={1}
-            dragStep={1}
-            precision={0}
-            suffix=" px"
-            onchange={handleDynamicLabelSize}
+        <div class="flex items-center gap-2 pt-2">
+          <Checkbox
+            checked={nodeLabelsVisible}
+            onCheckedChange={(v) => handleNodeLabelsVisible(v)}
           />
-        </div>
-
-        <div class="space-y-2 pt-2">
-          <p class="text-xs font-medium text-muted-foreground">
-            Dynamic label value
-          </p>
-          <NumericalInput
-            bind:value={dynamicLabelValue}
-            step={1}
-            dragStep={1}
-            precision={0}
-            onchange={handleDynamicLabelValue}
-          />
-        </div>
-
-        <div class="space-y-2 pt-2">
-          <p class="text-xs font-medium text-muted-foreground">
-            Static label value
-          </p>
-          <NumericalInput
-            bind:value={staticLabelValue}
-            step={1}
-            dragStep={1}
-            precision={0}
-            onchange={handleStaticLabelValue}
-          />
+          <span class="text-xs font-medium text-muted-foreground">
+            Show node labels
+          </span>
         </div>
       </div>
     </div>

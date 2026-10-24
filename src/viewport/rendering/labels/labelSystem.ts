@@ -22,6 +22,7 @@ import {
 import { parseMsdfAtlas, type MsdfAtlasData, type MsdfFont } from './msdfAtlas';
 import {
   BYTES_PER_GLYPH,
+  channelOfFlags,
   clampChannel,
   countRenderableGlyphs,
   createLayoutMetrics,
@@ -149,6 +150,7 @@ export class LabelSystem {
   private fontSizePx: number;
   /** Per-channel px override; 0 = inherit channel 0. */
   private readonly channelOverride = new Float32Array(MAX_LABEL_CHANNELS);
+  private readonly channelVisible = new Uint8Array(MAX_LABEL_CHANNELS).fill(1); // 1 = visible
 
   // Static layer
   private readonly records = new Map<LabelId, StaticRecord>();
@@ -270,6 +272,19 @@ export class LabelSystem {
     }
   }
 
+  setChannelVisible(channel: number, visible: boolean): void {
+    // static: immediate, stream: next pass
+    const ch = clampChannel(channel);
+    const value = visible ? 1 : 0;
+    if (this.channelVisible[ch] === value) return;
+    this.channelVisible[ch] = value;
+    this.staticDirty = true;
+  }
+
+  isChannelVisible(channel: number): boolean {
+    return this.channelVisible[clampChannel(channel)] === 1;
+  }
+
   addStatic(options: LabelOptions): LabelId {
     const id = options.id ?? `label-${this.nextId++}`;
     const existing = this.records.get(id);
@@ -383,6 +398,7 @@ export class LabelSystem {
 
   pushStream(options: LabelOptions): void {
     if (options.visible === false) return;
+    if (this.channelVisible[clampChannel(options.channel ?? 0)] === 0) return;
     const first = this.streamGlyphs;
     const remaining = this.maxStreamGlyphs - first;
     if (remaining <= 0) {
@@ -473,6 +489,7 @@ export class LabelSystem {
     let w = 0;
     for (const rec of this.records.values()) {
       if (!rec.visible || rec.glyphCount === 0) continue;
+      if (this.channelVisible[channelOfFlags(rec.flags)] === 0) continue;
       const len = rec.glyphCount * FLOATS_PER_GLYPH;
       if (w + len > dst.length) {
         this.warnStaticOverflow();
