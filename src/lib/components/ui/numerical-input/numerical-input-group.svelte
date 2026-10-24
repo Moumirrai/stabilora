@@ -6,7 +6,7 @@
     variants: {
       orientation: {
         horizontal:
-          "[&>[data-slot=numerical-input]]:w-0 [&>[data-slot=numerical-input]]:flex-1 [&>[data-slot=numerical-input]:not(:has(~[data-slot=numerical-input]))]:rounded-r-lg! [&>*:not(:first-child)]:rounded-l-none [&>*:not(:first-child)]:border-l-0 [&>*:not(:last-child)]:rounded-r-none",
+          '[&>[data-slot=numerical-input]]:w-0 [&>[data-slot=numerical-input]]:flex-1 [&>[data-slot=numerical-input]:not(:has(~[data-slot=numerical-input]))]:rounded-r-lg! [&>*:not(:first-child)]:rounded-l-none [&>*:not(:first-child)]:border-l-0 [&>*:not(:last-child)]:rounded-r-none',
         vertical: 'grid numerical-input-group-vertical',
       },
     },

@@ -209,19 +209,7 @@ describe('layoutText robustness', () => {
 describe('fillInstanceConstants', () => {
   it('fills anchor, color, rotation and flags for each glyph', () => {
     const out = new Float32Array(3 * FLOATS_PER_GLYPH);
-    fillInstanceConstants(
-      out,
-      1,
-      2,
-      5,
-      6,
-      0.1,
-      0.2,
-      0.3,
-      0.4,
-      1.5,
-      3
-    );
+    fillInstanceConstants(out, 1, 2, 5, 6, 0.1, 0.2, 0.3, 0.4, 1.5, 3);
     expect(out[I_ANCHOR]).toBe(0); // glyph 0 untouched
     for (const g of [1, 2]) {
       const o = g * FLOATS_PER_GLYPH;

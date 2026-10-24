@@ -30,7 +30,11 @@ export class InstancedBeamLineGroup extends Mesh<Geometry, Shader> {
       size: 2,
     });
     geometry.addAttribute('aEnd', { buffer: endData, instance: true, size: 2 });
-    geometry.addAttribute('aState', { buffer: stateData, instance: true, size: 1 });
+    geometry.addAttribute('aState', {
+      buffer: stateData,
+      instance: true,
+      size: 1,
+    });
     geometry.instanceCount = 0;
 
     const beamUniforms = new UniformGroup({

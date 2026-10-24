@@ -2,7 +2,7 @@
   import { type VariantProps, tv } from 'tailwind-variants';
 
   export const numericalInputVariants = tv({
-    base: "group/numerical-input focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 relative flex h-8 w-full items-center overflow-hidden rounded-lg border bg-clip-padding text-sm font-medium outline-none transition-colors select-none focus-visible:ring-3 aria-invalid:ring-3 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+    base: 'group/numerical-input focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 relative flex h-8 w-full items-center overflow-hidden rounded-lg border bg-clip-padding text-sm font-medium outline-none transition-colors select-none focus-visible:ring-3 aria-invalid:ring-3 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
     variants: {
       variant: {
         default: 'bg-primary text-primary-foreground border-transparent',

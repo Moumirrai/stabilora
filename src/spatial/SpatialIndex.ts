@@ -16,13 +16,15 @@ export class SpatialIndex {
     maxX: number;
     maxY: number;
   }): SpatialItem[] {
-    return this.tree.search(bbox).filter(
-      item =>
-        item.minX >= bbox.minX &&
-        item.maxX <= bbox.maxX &&
-        item.minY >= bbox.minY &&
-        item.maxY <= bbox.maxY
-    );
+    return this.tree
+      .search(bbox)
+      .filter(
+        (item) =>
+          item.minX >= bbox.minX &&
+          item.maxX <= bbox.maxX &&
+          item.minY >= bbox.minY &&
+          item.maxY <= bbox.maxY
+      );
   }
 
   search(bbox: {
