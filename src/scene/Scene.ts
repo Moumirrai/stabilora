@@ -10,8 +10,17 @@ import { NodeMesh } from '../viewport/rendering/primitives/NodeMesh';
 import { InstancedBeamLineGroup } from '../viewport/rendering/primitives/InstancedBeamLineGroup';
 import { SupportMesh } from '../viewport/rendering/primitives/SupportMesh';
 import type { ViewportEngine } from '../viewport/ViewportEngine';
+import type { DebugLabels } from '../examples/DebugLabels';
+import {
+  LabelLayer,
+  type LabelLayerOptions,
+} from '../viewport/rendering/labels/LabelLayer';
 import { SelectionController } from './SelectionController';
 import { collectSupportInstances } from './supports/collectSupports';
+
+export interface SceneOptions {
+  labels?: LabelLayerOptions;
+}
 
 export class Scene {
   readonly model: Model;
@@ -24,11 +33,26 @@ export class Scene {
   private readonly supportMesh: SupportMesh;
   readonly selection = new SelectionController();
 
+  readonly labels: LabelLayer;
+
+  /** Demo overlay handle; set by the editor, cleared on teardown. */
+  debugLabels: DebugLabels | null = null;
+
   private viewport: ViewportEngine;
   private unsubOnChange: () => void;
 
-  constructor(viewport: ViewportEngine) {
+  // font load is cached; scene owns its label batch like the batches below
+  static async create(
+    viewport: ViewportEngine,
+    options: SceneOptions = {}
+  ): Promise<Scene> {
+    const labels = await LabelLayer.create(viewport, options.labels);
+    return new Scene(viewport, labels);
+  }
+
+  private constructor(viewport: ViewportEngine, labels: LabelLayer) {
     this.viewport = viewport;
+    this.labels = labels;
     this.model = new Model();
     this.solver = new Solver(this.model);
     this.repository = new ModelRepository(this.model);
@@ -106,6 +130,12 @@ export class Scene {
     this.viewport.requestRender();
   }
 
+  /** Load the font and attach the label layer; safe to call once. */
+  /** Set the font size for a label channel (default 0). */
+  setLabelSize(px: number, channel = 0): void {
+    this.labels.setChannelFontSizePx(channel, px);
+  }
+
   fitInView(instant?: boolean): void {
     const bbox = this.spatialIndex.boundingBox();
     if (
@@ -156,7 +186,10 @@ export class Scene {
   }
 
   destroy(): void {
+    this.debugLabels?.dispose();
+    this.debugLabels = null;
     this.unsubOnChange();
+    this.labels.dispose();
     this.nodeMesh.destroy();
     this.beamGroup.destroy();
     this.supportMesh.destroy();

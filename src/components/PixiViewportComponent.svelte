@@ -3,22 +3,56 @@
   import { ViewportEngine } from '../viewport/ViewportEngine';
   import type { ViewportEngine as ViewportEngineType } from '../viewport/ViewportEngine';
 
-  let { onviewport }: { onviewport?: (viewport: ViewportEngineType) => void } =
-    $props();
+  type ViewportCleanup = void | (() => void);
+  type ViewportSetup = (
+    viewport: ViewportEngineType
+  ) => ViewportCleanup | Promise<ViewportCleanup>;
+
+  let {
+    onviewport,
+  }: {
+    onviewport?: ViewportSetup;
+  } = $props();
 
   let containerRef: HTMLDivElement;
   let engine: ViewportEngine | null = null;
   let ready = $state(false);
+  let cleanup: (() => void) | null = null;
+  let cancelled = false;
 
   onMount(async () => {
-    if (containerRef) {
-      engine = await ViewportEngine.create(containerRef);
-      onviewport?.(engine);
+    if (!containerRef) return;
+
+    try {
+      const created = await ViewportEngine.create(containerRef);
+      if (cancelled) {
+        created.destroy();
+        return;
+      }
+      engine = created;
+
+      const result = await onviewport?.(created);
+      if (cancelled) {
+        if (typeof result === 'function') result();
+        created.destroy();
+        return;
+      }
+
+      cleanup = typeof result === 'function' ? result : null;
       ready = true;
+    } catch (error) {
+      console.error('Failed to initialize viewport.', error);
+      if (engine) {
+        engine.destroy();
+        engine = null;
+      }
     }
   });
 
   onDestroy(() => {
+    cancelled = true;
+    cleanup?.();
+    cleanup = null;
     if (engine) {
       engine.destroy();
       engine = null;

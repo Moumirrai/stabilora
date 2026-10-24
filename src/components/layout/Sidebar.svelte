@@ -8,6 +8,7 @@
   } from '$lib/components/ui/numerical-input';
   import { app } from '../../app/App';
   import { DEFAULT_SUPPORT_SIZE } from '../../viewport/rendering/primitives/supportStyle';
+  import { DEFAULT_LABEL_FONT_SIZE_PX } from '../../viewport/rendering/labels/labelSystem';
   import {
     Node,
     Element,
@@ -81,8 +82,8 @@
     const lc = model.loadCases.values().next().value!;
     if (!lc) return;
     const res = scene.solver.solve(lc.id);
-    console.log('Solver result:', res);
     const elapsedTime = performance.now() - currentTime;
+    console.log('Solver result:', res);
     console.log(`Solver took ${elapsedTime.toFixed(2)} ms`);
   }
 
@@ -99,6 +100,27 @@
 
   function handleSupportSize(value: number) {
     app.scene?.setSupportSize(value);
+  }
+
+  let labelSize = $state(DEFAULT_LABEL_FONT_SIZE_PX);
+  let dynamicLabelSize = $state(DEFAULT_LABEL_FONT_SIZE_PX);
+  let dynamicLabelValue = $state(0);
+  let staticLabelValue = $state(0);
+
+  function handleLabelSize(value: number) {
+    app.scene?.setLabelSize(value);
+  }
+
+  function handleDynamicLabelSize(value: number) {
+    app.scene?.setLabelSize(value, 1);
+  }
+
+  function handleDynamicLabelValue(value: number) {
+    app.scene?.debugLabels?.setResult(String(value));
+  }
+
+  function handleStaticLabelValue(value: number) {
+    app.scene?.debugLabels?.setStaticText(String(value));
   }
 </script>
 
@@ -177,6 +199,64 @@
             precision={0}
             suffix=" px"
             onchange={handleSupportSize}
+          />
+        </div>
+
+        <div class="space-y-2 pt-2">
+          <p class="text-xs font-medium text-muted-foreground">
+            Label size (channel 0)
+          </p>
+          <NumericalInput
+            bind:value={labelSize}
+            min={6}
+            max={48}
+            step={1}
+            dragStep={1}
+            precision={0}
+            suffix=" px"
+            onchange={handleLabelSize}
+          />
+        </div>
+
+        <div class="space-y-2 pt-2">
+          <p class="text-xs font-medium text-muted-foreground">
+            Dynamic label size (channel 1)
+          </p>
+          <NumericalInput
+            bind:value={dynamicLabelSize}
+            min={6}
+            max={48}
+            step={1}
+            dragStep={1}
+            precision={0}
+            suffix=" px"
+            onchange={handleDynamicLabelSize}
+          />
+        </div>
+
+        <div class="space-y-2 pt-2">
+          <p class="text-xs font-medium text-muted-foreground">
+            Dynamic label value
+          </p>
+          <NumericalInput
+            bind:value={dynamicLabelValue}
+            step={1}
+            dragStep={1}
+            precision={0}
+            onchange={handleDynamicLabelValue}
+          />
+        </div>
+
+        <div class="space-y-2 pt-2">
+          <p class="text-xs font-medium text-muted-foreground">
+            Static label value
+          </p>
+          <NumericalInput
+            bind:value={staticLabelValue}
+            step={1}
+            dragStep={1}
+            precision={0}
+            onchange={handleStaticLabelValue}
           />
         </div>
       </div>

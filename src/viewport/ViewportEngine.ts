@@ -1,9 +1,13 @@
-import { Application, Container, Graphics, Ticker } from 'pixi.js';
+import { Application, Container, Ticker } from 'pixi.js';
 import { CameraController, type CameraConfig } from './CameraController';
 import { DotGridMesh } from './rendering/primitives/DotGridMesh';
 import type { CameraState } from './CameraController';
 import { ViewportUniforms } from './rendering/primitives/ViewportUniforms';
 import { EventEmitter } from '../utils/EventEmitter';
+
+export interface ViewportEngineOptions {
+  camera?: CameraConfig;
+}
 
 export type ViewportPointerEvent = {
   type: 'pointerdown' | 'pointermove' | 'pointerup';
@@ -31,6 +35,9 @@ export class ViewportEngine {
 
   public grid: DotGridMesh;
 
+  // emitted before every viewport render
+  public readonly onBeforeRender = new EventEmitter<void>();
+
   private container: HTMLDivElement;
   private resizeObserver: ResizeObserver;
   private prevWidth = 0;
@@ -41,11 +48,12 @@ export class ViewportEngine {
   public onPointerEvent = new EventEmitter<ViewportPointerEvent>();
 
   private renderPending = false;
+  private destroyed = false;
 
   private constructor(
     app: Application,
     container: HTMLDivElement,
-    cameraConfig?: CameraConfig
+    options: ViewportEngineOptions = {}
   ) {
     this.app = app;
     this.container = container;
@@ -66,7 +74,7 @@ export class ViewportEngine {
     this.camera = new CameraController(
       this.worldContainer,
       this.app.canvas as HTMLCanvasElement,
-      cameraConfig
+      options.camera
     );
 
     this.cameraUnsubscriber = this.camera.onUpdate.subscribe(
@@ -108,16 +116,21 @@ export class ViewportEngine {
   };
 
   private render(): void {
-    this.app.renderer.render(this.app.stage);
+    if (this.destroyed) return;
+    try {
+      this.onBeforeRender.emit();
+    } finally {
+      if (!this.destroyed) this.app.renderer.render(this.app.stage);
+    }
   }
 
   public requestRender(): void {
-    if (this.renderPending) return;
+    if (this.destroyed || this.renderPending) return;
 
     this.renderPending = true;
     requestAnimationFrame(() => {
       this.renderPending = false;
-      this.render();
+      if (!this.destroyed) this.render();
     });
   }
 
@@ -185,7 +198,7 @@ export class ViewportEngine {
    */
   public static async create(
     container: HTMLDivElement,
-    cameraConfig?: CameraConfig
+    options: ViewportEngineOptions = {}
   ): Promise<ViewportEngine> {
     const app = new Application();
 
@@ -204,7 +217,7 @@ export class ViewportEngine {
 
     container.appendChild(app.canvas);
 
-    const engine = new ViewportEngine(app, container, cameraConfig);
+    const engine = new ViewportEngine(app, container, options);
     // Initial render
     engine.render();
     return engine;
@@ -241,8 +254,9 @@ export class ViewportEngine {
       this.app.screen.width,
       this.app.screen.height,
     ];
+    this.viewportUniforms.uniforms.uRes = this.app.renderer.resolution;
 
-    this.render();
+    this.requestRender();
   }
 
   /**
@@ -265,6 +279,9 @@ export class ViewportEngine {
   }
 
   public destroy(): void {
+    if (this.destroyed) return;
+    this.destroyed = true;
+
     const canvas = this.app.canvas as HTMLCanvasElement;
     canvas.removeEventListener('pointerdown', this.pointerDownHandler);
     canvas.removeEventListener('pointermove', this.pointerMoveHandler);

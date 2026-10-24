@@ -5,9 +5,9 @@
   import { Plus, Square, Trash2, Triangle, Dot, Minus } from '@lucide/svelte';
   import ContextMenu from './ContextMenu.svelte';
   import type { ViewportEngine } from '../viewport/ViewportEngine';
+  import { createDebugLabels } from '../examples/DebugLabels';
   import { Scene } from '../scene/Scene';
   import { app } from '../app/App';
-  import { onDestroy } from 'svelte';
   import { buildFrame } from '../utils/DemoFrame';
 
   let toolbarItems = $state([
@@ -18,9 +18,6 @@
     { icon: Square, action: () => console.log('Add Element'), active: false },
     { icon: Trash2, action: () => console.log('Remove'), active: false },
   ]);
-
-  let unsubPointer: (() => void) | null = null;
-  let unsubSelection: (() => void) | null = null;
 
   function toggleActive(index: number) {
     toolbarItems.forEach((item, i) => {
@@ -35,8 +32,11 @@
     scene.repository.commit(buildFrame(4, 3));
   }
 
-  function handleViewport(viewport: ViewportEngine) {
-    const scene = new Scene(viewport);
+  async function handleViewport(viewport: ViewportEngine): Promise<() => void> {
+    // font load is cached; overlay gates until the scene is ready
+    const scene = await Scene.create(viewport);
+    const debugLabels = createDebugLabels(scene.labels);
+    scene.debugLabels = debugLabels;
     app.setScene(scene);
     loadModel();
     scene.renderSync();
@@ -44,9 +44,9 @@
     scene.fitInView(true);
 
     const sel = scene.selection;
-    unsubSelection = sel.onChange(() => scene.renderSelection());
+    const unsubSelection = sel.onChange(() => scene.renderSelection());
 
-    unsubPointer = viewport.onPointerEvent.subscribe((e) => {
+    const unsubPointer = viewport.onPointerEvent.subscribe((e) => {
       const tol = 10 / viewport.camera.getState().scale;
       const hit = scene.hitTest(e.world.x, e.world.y, tol);
 
@@ -72,12 +72,16 @@
         }
       }
     });
-  }
 
-  onDestroy(() => {
-    unsubPointer?.();
-    unsubSelection?.();
-  });
+    let disposed = false;
+    return () => {
+      if (disposed) return;
+      disposed = true;
+      unsubPointer();
+      unsubSelection();
+      scene.destroy();
+    };
+  }
 </script>
 
 <div class="h-full relative">
