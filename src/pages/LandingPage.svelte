@@ -2,6 +2,17 @@
   import { push } from 'svelte-spa-router';
   let debugSequence = '';
 
+  function goToApp() {
+    push('/app');
+  }
+
+  function handleSupportKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      goToApp();
+    }
+  }
+
   function handleKeyDown(event: KeyboardEvent) {
     debugSequence += event.key.toLowerCase();
 
@@ -56,7 +67,11 @@
         y2="154"
         stroke="white"
         stroke-width="2"
-        onclick={() => push('/app')}
+        onclick={goToApp}
+        onkeydown={handleSupportKeyDown}
+        tabindex="0"
+        role="link"
+        aria-label="Open app"
         class="animated-support"
       />
     </svg>

@@ -97,7 +97,7 @@
           item.action();
         }}
       >
-        <svelte:component this={item.icon} class="h-4 w-4" />
+        <item.icon class="h-4 w-4" />
       </Button>
     {/each}
   </Card.Root>
