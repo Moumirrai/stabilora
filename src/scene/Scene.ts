@@ -2,6 +2,7 @@ import {
   Model,
   ModelRepository,
   Solver,
+  type SolveResult,
   type TransactionChanges,
 } from '@stabilora/arcora';
 import { SpatialIndex } from '../spatial/SpatialIndex';
@@ -16,6 +17,10 @@ import {
 } from '../viewport/rendering/labels/LabelLayer';
 import { NodeLabels } from './NodeLabels';
 import { SelectionController } from './SelectionController';
+import { InteractionController } from './InteractionController';
+import { ToolManager } from '../tools/ToolManager';
+import { SelectMoveTool } from '../tools/SelectMoveTool';
+import { HandTool } from '../tools/HandTool';
 import { collectSupportInstances } from './supports/collectSupports';
 
 export interface SceneOptions {
@@ -36,8 +41,15 @@ export class Scene {
   readonly labels: LabelLayer;
   readonly nodeLabels: NodeLabels;
 
-  private viewport: ViewportEngine;
+  readonly viewport: ViewportEngine;
   private unsubOnChange: () => void;
+  private unsubSelection: () => void;
+  readonly interaction: InteractionController;
+  readonly tools: ToolManager;
+
+  lastSolveMs = 0;
+  private solveScheduled = false;
+  private solveFrame = 0;
 
   // font load is cached; scene owns its label batch like the batches below
   static async create(
@@ -77,9 +89,21 @@ export class Scene {
       (changes: TransactionChanges) => {
         this.spatialIndex.sync(changes, this.model);
         this.nodeLabels.sync(changes);
+        this.renderSync();
+        // solve last so a solver failure can never block the visual update
+        this.scheduleSolve();
       }
     );
     this.nodeLabels.syncAll();
+
+    this.unsubSelection = this.selection.onChange(() => this.renderSelection());
+
+    this.interaction = new InteractionController(this, viewport);
+    this.tools = new ToolManager(this, viewport, this.interaction);
+    this.tools.register(new SelectMoveTool());
+    this.tools.register(new HandTool());
+    this.tools.setActive(SelectMoveTool.ID);
+    this.interaction.onMiddleDoubleClick.subscribe(() => this.fitInView());
   }
 
   renderSync(): void {
@@ -181,20 +205,51 @@ export class Scene {
 
   undo(): void {
     this.repository.undo();
-    this.renderSync();
   }
 
   redo(): void {
     this.repository.redo();
-    this.renderSync();
+  }
+
+  // rate limit solves to one per frame
+  scheduleSolve(): void {
+    if (this.solveScheduled) return;
+    this.solveScheduled = true;
+    this.solveFrame = requestAnimationFrame(() => {
+      this.solveScheduled = false;
+      this.solveFrame = 0;
+      this.solve();
+    });
+  }
+
+  // debug solve first load case only
+  solve(): SolveResult | null {
+    const loadCaseId = this.model.loadCases.keys().next().value;
+    if (!loadCaseId) return null;
+    try {
+      const startTime = performance.now();
+      const res = this.solver.solve(loadCaseId);
+      this.lastSolveMs = performance.now() - startTime;
+      console.log(`Solve took ${this.lastSolveMs.toFixed(2)} ms`);
+      return res;
+    } catch (err) {
+      console.error('Solve failed', err);
+      return null;
+    }
   }
 
   destroy(): void {
+    if (this.solveScheduled) cancelAnimationFrame(this.solveFrame);
+    this.solveScheduled = false;
+    this.tools.destroy();
+    this.interaction.destroy();
+    this.unsubSelection();
     this.unsubOnChange();
     this.nodeLabels.dispose();
     this.labels.dispose();
     this.nodeMesh.destroy();
     this.beamGroup.destroy();
     this.supportMesh.destroy();
+    this.solver.destroy();
   }
 }

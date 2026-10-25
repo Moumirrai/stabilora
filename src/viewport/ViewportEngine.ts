@@ -9,8 +9,15 @@ export interface ViewportEngineOptions {
   camera?: CameraConfig;
 }
 
+export type ViewportPointerType =
+  | 'pointerdown'
+  | 'pointermove'
+  | 'pointerup'
+  | 'pointercancel'
+  | 'pointerleave';
+
 export type ViewportPointerEvent = {
-  type: 'pointerdown' | 'pointermove' | 'pointerup';
+  type: ViewportPointerType;
   button: number;
   screen: { x: number; y: number };
   world: { x: number; y: number };
@@ -105,6 +112,8 @@ export class ViewportEngine {
     canvas.addEventListener('pointerdown', this.pointerDownHandler);
     canvas.addEventListener('pointermove', this.pointerMoveHandler);
     canvas.addEventListener('pointerup', this.pointerUpHandler);
+    canvas.addEventListener('pointercancel', this.pointerCancelHandler);
+    canvas.addEventListener('pointerleave', this.pointerLeaveHandler);
     canvas.addEventListener('auxclick', this.auxClickHandler);
   }
 
@@ -135,6 +144,17 @@ export class ViewportEngine {
   }
 
   private pointerDownHandler = (e: PointerEvent) => {
+    // Capture the pointer for primary-button gestures so a drag keeps reporting
+    // to the canvas even when the cursor leaves it. This is what makes node
+    // dragging reliable.
+    if (e.button === 0) {
+      const canvas = this.app.canvas as HTMLCanvasElement;
+      try {
+        canvas.setPointerCapture(e.pointerId);
+      } catch {
+        // ignore (e.g. pointer already released)
+      }
+    }
     this.emitPointerEvent('pointerdown', e);
   };
 
@@ -143,35 +163,36 @@ export class ViewportEngine {
   };
 
   private pointerUpHandler = (e: PointerEvent) => {
+    if (e.button === 0) {
+      const canvas = this.app.canvas as HTMLCanvasElement;
+      try {
+        if (canvas.hasPointerCapture(e.pointerId)) {
+          canvas.releasePointerCapture(e.pointerId);
+        }
+      } catch {
+        // ignore
+      }
+    }
     this.emitPointerEvent('pointerup', e);
+  };
+
+  private pointerCancelHandler = (e: PointerEvent) => {
+    this.emitPointerEvent('pointercancel', e);
+  };
+
+  private pointerLeaveHandler = (e: PointerEvent) => {
+    this.emitPointerEvent('pointerleave', e);
   };
 
   private auxClickHandler = (e: MouseEvent) => {
     if (e.button === 1) {
-      const canvas = this.app.canvas as HTMLCanvasElement;
-      const rect = canvas.getBoundingClientRect();
-      const screenX = e.clientX - rect.left;
-      const screenY = e.clientY - rect.top;
-      const world = this.camera.screenToWorld(screenX, screenY);
-
-      this.onPointerEvent.emit({
-        type: 'pointerdown',
-        button: e.button,
-        screen: { x: screenX, y: screenY },
-        world,
-        ctrlKey: e.ctrlKey,
-        shiftKey: e.shiftKey,
-        altKey: e.altKey,
-        metaKey: e.metaKey,
-        originalEvent: e,
-        doubleClick: e.detail === 2,
-      });
+      this.emitPointerEvent('pointerdown', e);
     }
   };
 
   private emitPointerEvent(
     type: ViewportPointerEvent['type'],
-    e: PointerEvent
+    e: PointerEvent | MouseEvent
   ): void {
     const canvas = this.app.canvas as HTMLCanvasElement;
     const rect = canvas.getBoundingClientRect();
@@ -189,7 +210,7 @@ export class ViewportEngine {
       altKey: e.altKey,
       metaKey: e.metaKey,
       originalEvent: e,
-      doubleClick: false,
+      doubleClick: e.detail === 2,
     });
   }
 
@@ -256,7 +277,7 @@ export class ViewportEngine {
     ];
     this.viewportUniforms.uniforms.uRes = this.app.renderer.resolution;
 
-    this.requestRender();
+    this.render();
   }
 
   /**
@@ -278,6 +299,12 @@ export class ViewportEngine {
     };
   }
 
+  public setCursor(style: string | null): void {
+    const canvas = this.app.canvas as HTMLCanvasElement | undefined;
+    const next = style ?? '';
+    if (canvas && canvas.style.cursor !== next) canvas.style.cursor = next;
+  }
+
   public destroy(): void {
     if (this.destroyed) return;
     this.destroyed = true;
@@ -286,6 +313,8 @@ export class ViewportEngine {
     canvas.removeEventListener('pointerdown', this.pointerDownHandler);
     canvas.removeEventListener('pointermove', this.pointerMoveHandler);
     canvas.removeEventListener('pointerup', this.pointerUpHandler);
+    canvas.removeEventListener('pointercancel', this.pointerCancelHandler);
+    canvas.removeEventListener('pointerleave', this.pointerLeaveHandler);
     canvas.removeEventListener('auxclick', this.auxClickHandler);
 
     if (this.resizeObserver) {

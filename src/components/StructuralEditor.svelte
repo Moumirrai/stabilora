@@ -2,80 +2,109 @@
   import PixiViewportComponent from './PixiViewportComponent.svelte';
   import { Button } from '$lib/components/ui/button';
   import * as Card from '$lib/components/ui/card/index.js';
-  import { Plus, Square, Trash2, Triangle, Dot, Minus } from '@lucide/svelte';
+  import {
+    Plus,
+    Square,
+    Trash2,
+    Triangle,
+    Dot,
+    Minus,
+    Hand,
+  } from '@lucide/svelte';
   import ContextMenu from './ContextMenu.svelte';
   import type { ViewportEngine } from '../viewport/ViewportEngine';
   import { Scene } from '../scene/Scene';
+  import { SelectMoveTool } from '../tools/SelectMoveTool';
+  import { HandTool } from '../tools/HandTool';
   import { app } from '../app/App';
   import { buildFrame } from '../utils/DemoFrame';
 
   let toolbarItems = $state([
-    { icon: Dot, action: () => console.log('Select'), active: true },
-    { icon: Minus, action: () => console.log('Remove Node'), active: false },
-    { icon: Triangle, action: () => console.log('Add Shape'), active: false },
-    { icon: Plus, action: () => console.log('Add Node'), active: false },
-    { icon: Square, action: () => console.log('Add Element'), active: false },
-    { icon: Trash2, action: () => console.log('Remove'), active: false },
+    {
+      icon: Dot,
+      toolId: SelectMoveTool.ID as string | null,
+      action: null as (() => void) | null,
+      active: true,
+    },
+    {
+      icon: Hand,
+      toolId: HandTool.ID as string | null,
+      action: null,
+      active: false,
+    },
+    {
+      icon: Minus,
+      toolId: null,
+      action: () => console.log('Remove Node'),
+      active: false,
+    },
+    {
+      icon: Triangle,
+      toolId: null,
+      action: () => console.log('Add Shape'),
+      active: false,
+    },
+    {
+      icon: Plus,
+      toolId: null,
+      action: () => console.log('Add Node'),
+      active: false,
+    },
+    {
+      icon: Square,
+      toolId: null,
+      action: () => console.log('Add Element'),
+      active: false,
+    },
+    {
+      icon: Trash2,
+      toolId: null,
+      action: () => console.log('Remove'),
+      active: false,
+    },
   ]);
 
-  function toggleActive(index: number) {
-    toolbarItems.forEach((item, i) => {
-      item.active = i === index;
+  function syncToolbar() {
+    const active = app.scene?.tools.activeToolId;
+    toolbarItems.forEach((item) => {
+      if (item.toolId !== null) item.active = item.toolId === active;
     });
     toolbarItems = [...toolbarItems];
+  }
+
+  function toggleActive(index: number) {
+    const item = toolbarItems[index];
+    if (item.toolId !== null)
+      app.scene?.tools.setActive(item.toolId); // highlight follows tools.onChanged
+    else {
+      toolbarItems.forEach((entry, i) => {
+        entry.active = i === index;
+      });
+      toolbarItems = [...toolbarItems];
+    }
+    item.action?.();
   }
 
   function loadModel() {
     const scene = app.scene;
     if (!scene) return;
-    scene.repository.commit(buildFrame(4, 3));
+    scene.repository.commit(buildFrame(8, 8));
   }
 
   async function handleViewport(viewport: ViewportEngine): Promise<() => void> {
-    // font load is cached; overlay gates until the scene is ready
+    // Scene owns rendering, selection and pointer interaction (see
+    // InteractionController). The Svelte layer only wires up the viewport.
     const scene = await Scene.create(viewport);
     app.setScene(scene);
     loadModel();
-    scene.renderSync();
 
     scene.fitInView(true);
 
-    const sel = scene.selection;
-    const unsubSelection = sel.onChange(() => scene.renderSelection());
+    syncToolbar();
+    const unsubTools = scene.tools.onChanged.subscribe(syncToolbar);
 
-    const unsubPointer = viewport.onPointerEvent.subscribe((e) => {
-      const tol = 10 / viewport.camera.getState().scale;
-      const hit = scene.hitTest(e.world.x, e.world.y, tol);
-
-      if (e.type === 'pointermove') {
-        sel.setHovered(hit?.entity ?? null);
-      }
-
-      if (e.button === 1 && e.type === 'pointerdown' && e.doubleClick) {
-        scene.fitInView();
-      }
-
-      if (e.button === 0 && e.type === 'pointerdown') {
-        if (hit) {
-          if (e.ctrlKey) {
-            sel.selectAdd(hit.entity);
-          } else if (e.shiftKey) {
-            sel.selectRemove(hit.entity);
-          } else {
-            sel.selectOnly(hit.entity);
-          }
-        } else {
-          if (!e.ctrlKey && !e.shiftKey) sel.clearSelection();
-        }
-      }
-    });
-
-    let disposed = false;
     return () => {
-      if (disposed) return;
-      disposed = true;
-      unsubPointer();
-      unsubSelection();
+      unsubTools();
       scene.destroy();
     };
   }
@@ -92,10 +121,7 @@
       <Button
         variant={item.active ? 'default' : 'ghost'}
         size="icon"
-        onclick={() => {
-          toggleActive(index);
-          item.action();
-        }}
+        onclick={() => toggleActive(index)}
       >
         <item.icon class="h-4 w-4" />
       </Button>

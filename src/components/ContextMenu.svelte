@@ -6,7 +6,7 @@
 </script>
 
 <ContextMenu.Root>
-  <ContextMenu.Trigger class="w-full h-full">
+  <ContextMenu.Trigger class="w-full h-full [outline:none]">
     {@render children()}
   </ContextMenu.Trigger>
 

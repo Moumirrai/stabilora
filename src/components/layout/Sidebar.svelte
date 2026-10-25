@@ -56,8 +56,10 @@
     const txn = new Transaction('Delete selection');
     for (const entity of scene.selection.selected.values()) {
       if (entity instanceof Node) {
+        if (!scene.model.nodes.has(entity.id)) continue;
         txn.addCommand(new RemoveNodeOperation(entity.id));
       } else {
+        if (!scene.model.elements.has(entity.id)) continue;
         txn.addCommand(new RemoveElementOperation(entity.id));
       }
     }

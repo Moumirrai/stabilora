@@ -65,8 +65,8 @@ export class SpatialIndex {
   }
 
   sync(changes: TransactionChanges, model: Model): void {
-    for (const [id, change] of changes.added) {
-      this.insertChange(id, change, model);
+    for (const [, change] of changes.added) {
+      this.insertChange(change.id, change, model);
     }
 
     for (const [, change] of changes.changed) {

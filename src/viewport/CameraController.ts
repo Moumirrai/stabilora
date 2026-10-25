@@ -38,6 +38,7 @@ export class CameraController {
 
   private isPanning = false;
   private lastPanPosition = { x: 0, y: 0 };
+  private prevCursor: string | null = null;
   private lerpFactor = 0.4; // smoothing factor for zoom
 
   private animationFrameId: number | null = null;
@@ -168,6 +169,7 @@ export class CameraController {
       e.preventDefault();
       this.isPanning = true;
       this.lastPanPosition = { x: e.clientX, y: e.clientY };
+      this.prevCursor = this.canvas.style.cursor || null;
       this.canvas.style.cursor = 'grabbing';
       window.addEventListener(
         'pointermove',
@@ -205,7 +207,8 @@ export class CameraController {
   private handlePointerUp = (e: PointerEvent): void => {
     if (this.isPanning && e.button === 1) {
       this.isPanning = false;
-      this.canvas.style.cursor = 'default';
+      this.canvas.style.cursor = this.prevCursor ?? '';
+      this.prevCursor = null;
       window.removeEventListener(
         'pointermove',
         this.handlePointerMove as EventListener
