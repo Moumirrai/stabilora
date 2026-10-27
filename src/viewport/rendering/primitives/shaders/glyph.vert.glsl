@@ -9,8 +9,8 @@ uniform mat3 uProjectionMatrix;
 uniform mat3 uWorldTransformMatrix;
 uniform mat3 uTransformMatrix;
 uniform float uCameraScale;
-uniform float uSupportSize;
-uniform float uSupportStroke;
+uniform float uGlyphSize;
+uniform float uGlyphStroke;
 uniform sampler2D uGlyphAtlas;
 
 out vec2 vLocal;       // glyph-space position in screen pixels (unrotated)
@@ -28,9 +28,9 @@ void main() {
     vec4 box = fetchTexel(glyph * 2 + 1);
 
     // Quad covering the glyph bounds plus room for the stroke and its AA ramp.
-    float pad = uSupportStroke * 0.5 + 2.0;
-    vec2 lo = box.xy * uSupportSize - pad;
-    vec2 hi = box.zw * uSupportSize + pad;
+    float pad = uGlyphStroke * 0.5 + 2.0;
+    vec2 lo = box.xy * uGlyphSize - pad;
+    vec2 hi = box.zw * uGlyphSize + pad;
     vec2 localPx = mix(lo, hi, aExtrude * 0.5 + 0.5);
 
     // Rotate rigidly around the node, in screen pixels, so the glyph keeps a

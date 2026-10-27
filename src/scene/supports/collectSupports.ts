@@ -1,5 +1,6 @@
 import { Dof, type BCData } from '@stabilora/arcora';
 import type { GlyphInstance } from '../../viewport/rendering/glyphs/instance';
+import type { GlyphName } from '../../viewport/rendering/glyphs/supportGlyphs';
 import {
   classifySupport,
   SPRING_GLYPHS,
@@ -18,9 +19,11 @@ export interface SupportModel {
 }
 
 // Fixed DOFs pick one glyph; springs add one per unconstrained sprung DOF.
-export function collectSupportInstances(model: SupportModel): GlyphInstance[] {
+export function collectSupportInstances(
+  model: SupportModel
+): GlyphInstance<GlyphName>[] {
   const neighbors = neighborsOfSupportedNodes(model);
-  const out: GlyphInstance[] = [];
+  const out: GlyphInstance<GlyphName>[] = [];
 
   for (const bc of model.boundaryConditions.values()) {
     const node = model.nodes.get(bc.nodeId);

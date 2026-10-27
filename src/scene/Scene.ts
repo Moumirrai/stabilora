@@ -10,18 +10,24 @@ import { hitTestPrecise, type HitResult } from '../spatial/hitTest';
 import { NodeMesh } from '../viewport/rendering/primitives/NodeMesh';
 import { InstancedBeamLineGroup } from '../viewport/rendering/primitives/InstancedBeamLineGroup';
 import { SupportMesh } from '../viewport/rendering/primitives/SupportMesh';
+import { ReactionMesh } from '../viewport/rendering/primitives/ReactionMesh';
 import type { ViewportEngine } from '../viewport/ViewportEngine';
 import {
   LabelLayer,
   type LabelLayerOptions,
 } from '../viewport/rendering/labels/LabelLayer';
 import { NodeLabels } from './NodeLabels';
+import { REACTION_LABEL_CHANNEL, ReactionLabels } from './ReactionLabels';
 import { SelectionController } from './SelectionController';
 import { InteractionController } from './InteractionController';
 import { ToolManager } from '../tools/ToolManager';
 import { SelectMoveTool } from '../tools/SelectMoveTool';
 import { HandTool } from '../tools/HandTool';
 import { collectSupportInstances } from './supports/collectSupports';
+import {
+  collectReactionInstances,
+  type ReactionDatum,
+} from './supports/collectReactions';
 
 export interface SceneOptions {
   labels?: LabelLayerOptions;
@@ -36,10 +42,15 @@ export class Scene {
   readonly nodeMesh: NodeMesh;
   readonly beamGroup: InstancedBeamLineGroup;
   private readonly supportMesh: SupportMesh;
+  private readonly reactionMesh: ReactionMesh;
   readonly selection = new SelectionController();
 
   readonly labels: LabelLayer;
   readonly nodeLabels: NodeLabels;
+  readonly reactionLabels: ReactionLabels;
+
+  private reactionData: ReactionDatum[] = [];
+  private reactionsVisible = true;
 
   readonly viewport: ViewportEngine;
   private unsubOnChange: () => void;
@@ -79,12 +90,16 @@ export class Scene {
       }
     );
     this.supportMesh = new SupportMesh(viewport.camera.cameraUniforms);
+    this.reactionMesh = new ReactionMesh(viewport.camera.cameraUniforms);
+    this.reactionMesh.visible = false;
 
     viewport.worldContainer.addChild(this.beamGroup);
     viewport.worldContainer.addChild(this.supportMesh);
+    viewport.worldContainer.addChild(this.reactionMesh);
     viewport.worldContainer.addChild(this.nodeMesh);
 
     this.nodeLabels = new NodeLabels(this.model, this.labels);
+    this.reactionLabels = new ReactionLabels(this.labels, viewport);
     this.unsubOnChange = this.repository.onChange(
       (changes: TransactionChanges) => {
         this.spatialIndex.sync(changes, this.model);
@@ -147,12 +162,49 @@ export class Scene {
   }
 
   private renderSupports(): void {
-    this.supportMesh.update(collectSupportInstances(this.model));
+    const instances = collectSupportInstances(this.model);
+    this.supportMesh.update(instances);
+    this.supportMesh.visible = instances.length > 0;
+  }
+
+  private renderReactions(res: SolveResult): void {
+    this.reactionData = collectReactionInstances(
+      this.model,
+      this.solver.dofIndex,
+      res.reactions
+    );
+    this.reactionMesh.update(this.reactionData);
+    this.reactionMesh.visible =
+      this.reactionsVisible && this.reactionData.length > 0;
+    if (this.reactionsVisible) {
+      this.reactionLabels.update(this.reactionData);
+    }
+    this.viewport.requestRender();
+  }
+
+  private clearReactions(): void {
+    this.reactionData = [];
+    this.reactionMesh.update([]);
+    this.reactionMesh.visible = false;
+    this.reactionLabels.clear();
+    this.viewport.requestRender();
   }
 
   setSupportSize(size: number): void {
     this.supportMesh.setSize(size);
     this.viewport.requestRender();
+  }
+
+  setReactionSize(size: number): void {
+    this.reactionMesh.setSize(size);
+    this.reactionLabels.setReactionSizePx(size);
+  }
+
+  setReactionsVisible(visible: boolean): void {
+    this.reactionsVisible = visible;
+    this.reactionMesh.visible = visible && this.reactionData.length > 0;
+    this.setChannelVisible(REACTION_LABEL_CHANNEL, visible);
+    if (visible) this.reactionLabels.update(this.reactionData);
   }
 
   /** Set the font size for a label channel (default 0). */
@@ -225,15 +277,20 @@ export class Scene {
   // debug solve first load case only
   solve(): SolveResult | null {
     const loadCaseId = this.model.loadCases.keys().next().value;
-    if (!loadCaseId) return null;
+    if (!loadCaseId) {
+      this.clearReactions();
+      return null;
+    }
     try {
       const startTime = performance.now();
       const res = this.solver.solve(loadCaseId);
       this.lastSolveMs = performance.now() - startTime;
       console.log(`Solve took ${this.lastSolveMs.toFixed(2)} ms`);
+      this.renderReactions(res);
       return res;
     } catch (err) {
       console.error('Solve failed', err);
+      this.clearReactions();
       return null;
     }
   }
@@ -246,10 +303,12 @@ export class Scene {
     this.unsubSelection();
     this.unsubOnChange();
     this.nodeLabels.dispose();
+    this.reactionLabels.dispose();
     this.labels.dispose();
     this.nodeMesh.destroy();
     this.beamGroup.destroy();
     this.supportMesh.destroy();
+    this.reactionMesh.destroy();
     this.solver.destroy();
   }
 }

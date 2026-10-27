@@ -8,7 +8,7 @@ export interface GlyphAtlas<K extends string> {
 }
 
 // Pack glyph segments into one float texture.
-// Texel layout, read with texelFetch in support.vert/frag.glsl:
+// Texel layout, read with texelFetch in glyph.vert/frag.glsl:
 //   2g     = segmentStart, segmentCount, 0, 0
 //   2g + 1 = minX, minY, maxX, maxY
 //   2G...  = x0, y0, x1, y1 (one per segment)

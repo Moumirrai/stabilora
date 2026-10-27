@@ -7,9 +7,9 @@ flat in vec2 vRange;  // first segment texel, segment count
 
 out vec4 fragColor;
 
-uniform float uSupportSize;
-uniform float uSupportStroke;
-uniform vec3 uSupportColor;
+uniform float uGlyphSize;
+uniform float uGlyphStroke;
+uniform vec3 uGlyphColor;
 uniform sampler2D uGlyphAtlas;
 
 // Everything below is evaluated in screen pixels, so a distance field has a
@@ -37,17 +37,17 @@ void main() {
     int count = int(vRange.y + 0.5);
 
     // One combined distance field and one stroke() call: no seams where
-    // segments meet, and the stroke width is exactly uSupportStroke pixels
+    // segments meet, and the stroke width is exactly uGlyphStroke pixels
     // regardless of the glyph size.
     float d = 1e6;
     for (int i = 0; i < count; i++) {
         vec4 seg = fetchTexel(start + i);
-        d = min(d, sdSegment(vLocal, seg.xy * uSupportSize, seg.zw * uSupportSize));
+        d = min(d, sdSegment(vLocal, seg.xy * uGlyphSize, seg.zw * uGlyphSize));
     }
 
-    float ink = stroke(d, uSupportStroke * 0.5);
+    float ink = stroke(d, uGlyphStroke * 0.5);
     if (ink <= 0.0) discard;
 
     // Premultiplied alpha, as Pixi's blend mode expects.
-    fragColor = vec4(uSupportColor * ink, ink);
+    fragColor = vec4(uGlyphColor * ink, ink);
 }

@@ -13,8 +13,8 @@ import {
   AddBoundaryConditionOperation,
 } from '@stabilora/arcora';
 
-const BAY_L = 6 * 1000; // m
-const STOREY_H = 3.5 * 1000; // m
+const BAY_L = 6; // m
+const STOREY_H = 3.5; // m
 
 interface Frame {
   model: Model;
